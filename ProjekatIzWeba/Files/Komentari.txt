@@ -1,0 +1,6 @@
+1|ApartmanAAAAAAA|MarijaGost|0|Sve najgore o milici pranjkic|True
+2|ApartmanBozic|MarijaGost|4|snb|True
+3|Soba|gost|2|Nije u redu|True
+4|ApartmanAAAAAAA|MarijaGost|5|snb|False
+
+5|Apartman2|Marija96|5|Lep ambijent, lep prostor, snb|False|

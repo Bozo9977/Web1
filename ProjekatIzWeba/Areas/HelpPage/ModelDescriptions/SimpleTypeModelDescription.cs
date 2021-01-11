@@ -1,0 +1,6 @@
+namespace ProjekatIzWeba.Areas.HelpPage.ModelDescriptions
+{
+    public class SimpleTypeModelDescription : ModelDescription
+    {
+    }
+}

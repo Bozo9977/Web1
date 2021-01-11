@@ -1,0 +1,9 @@
+Bozidar|Maric|gost|gost|MUSKI|GOST
+Bozidar|Maric|Bozo9977|administrator|MUSKI|ADMINISTRATOR
+
+marija|Maric|Marija96|marija|ZENSKI|GOST
+Bozidar|Maric|domacinBozo|domacin|MUSKI|DOMACIN
+Bozidar|Maric|domacinBozo1|domacin|MUSKI|DOMACIN
+Admin|Adminovic|admin|admin|ZENSKI|ADMINISTRATOR
+
+Bozidar1|Maric|domacinBozo|domacin|MUSKI|DOMACIN

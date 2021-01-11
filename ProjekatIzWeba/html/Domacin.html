@@ -1,0 +1,1395 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <script src="../Scripts/jquery-3.3.1.js"></script>
+    <script src="../Scripts/jquery-3.3.1.js"></script>
+    <link href="../Content/Site.css" rel="stylesheet" />
+    <link href="../Content/DatePicker.css" rel="stylesheet" />
+    <meta charset="utf-8" />
+
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDnihJyw_34z5S1KZXp90pfTGAqhFszNJk"></script>
+    <script src="../Scripts/bootstrap.js"></script>
+    <script src="../Scripts/bootstrap.min.js"></script>
+    <link rel="stylesheet" href="../Content/bootstrap.min.css"  />
+    <script src="//code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+
+    <title></title>
+    <script>
+        document.getElementById("formaApartman").onsubmit = function () {
+
+            return false; //prevent the default behavior of the submit event
+        }
+        document.getElementById("IzmenaPodatakaForma").onsubmit = function () {
+
+            return false; //prevent the default behavior of the submit event
+        }
+    </script>
+    <script type="text/javascript">
+        DodajLokaciju = function () {
+            var broj;
+            var ulica = "";
+            var grad = "";
+            var postanskiBroj;
+
+            var delovi = addresa.split(',');
+            var delovi1 = delovi[0].split(' ');
+            if (isNaN(delovi1[delovi1.length - 1])) {
+                for (var i = 0; i < delovi1.length; i++) {
+                    ulica += delovi1[i] + " ";
+                }
+                broj = String(randomIntFromInterval(1, 20));
+            }
+            else {
+                for (var i = 0; i < delovi1.length - 1; i++) {
+                    ulica += delovi1[i] + " ";
+                }
+                broj = delovi1[delovi1.length - 1];
+            }
+            var delovi2 = delovi[1].split(' ');
+            if (isNaN(delovi2[delovi2.length - 1])) {
+                for (var i = 1; i < delovi2.length; i++) {
+                    grad += delovi2[i] + " ";
+                }
+                postanskiBroj = "21000";
+            } else if (delovi2[delovi2.length - 1] > 22000) {
+                for (var i = 1; i < delovi2.length - 1; i++) {
+                    grad += delovi2[i] + " ";
+                }
+                postanskiBroj = "21000";
+            }
+            else {
+                for (var i = 1; i < delovi2.length - 1; i++) {
+                    grad += delovi2[i] + " ";
+                }
+                postanskiBroj = delovi2[delovi2.length - 1];
+            }
+
+            $("#GeografskaSirina").val(parseFloat(koordinate.split(',')[0]));
+            $("#GeografskaDuzina").val(parseFloat(koordinate.split(',')[1]));
+            $('#Ulica').val(ulica.trim());
+            $('#Broj').val(parseInt(broj.trim()));
+            $('#NaseljenoMesto').val(grad.trim());
+            $('#PostanskiBroj').val(parseInt(postanskiBroj.trim()));
+        }
+        ////////////google mape
+        var addresa;
+        var koordinate;
+
+        var geocoder = new google.maps.Geocoder();
+
+        function geocodePosition(pos) {
+            geocoder.geocode({
+                latLng: pos
+            }, function (responses) {
+                if (responses && responses.length > 0) {
+                    updateMarkerAddress(responses[0].formatted_address);
+                } else {
+                    updateMarkerAddress('Cannot determine address at this location.');
+                }
+            });
+        }
+
+        function updateMarkerStatus(str) { }
+
+        function updateMarkerPosition(latLng) {
+            document.getElementById('info').innerHTML = [
+                latLng.lat(),
+                latLng.lng()
+            ].join(', ');
+            koordinate = document.getElementById('info').innerHTML;
+        }
+
+        function updateMarkerAddress(str) {
+            document.getElementById('address').innerHTML = str;
+            addresa = str;
+        }
+
+        function initialize() {
+            var latLng = new google.maps.LatLng(45.2407607, 19.8269764);
+            var map = new google.maps.Map(document.getElementById('mapCanvas'), {
+                zoom: 16,
+                center: latLng,
+                mapTypeId: google.maps.MapTypeId.ROADMAP
+            });
+
+            var marker = new google.maps.Marker({
+                position: latLng,
+                title: 'Point A',
+                map: map,
+                draggable: true
+            });
+            navigator.geolocation.getCurrentPosition(function (position) {
+                var pos = {
+                    lat: position.coords.latitude,
+                    lng: position.coords.longitude
+                };
+            });
+
+            // Update current position info.
+            updateMarkerPosition(latLng);
+            geocodePosition(latLng);
+
+            // Add dragging event listeners.
+            google.maps.event.addListener(marker, 'dragstart', function () {
+                updateMarkerAddress('Dragging...');
+            });
+
+            google.maps.event.addListener(marker, 'drag', function () {
+                updateMarkerStatus('Dragging...');
+                updateMarkerPosition(marker.getPosition());
+            });
+
+            google.maps.event.addListener(marker, 'dragend', function () {
+                updateMarkerStatus('Drag ended');
+                geocodePosition(marker.getPosition());
+            });
+        }
+
+        google.maps.event.addDomListener(window, 'load', initialize);
+
+        function randomIntFromInterval(min, max) {
+            return Math.floor(Math.random() * (max - min + 1) + min);
+        }
+        //////////////////////////
+        zatvoriOKMessage = function () {
+            document.getElementById("podaciDomacin").innerHTML = "";
+        }
+        prikazi = function () {
+            //alert(sessionStorage["username"]);
+            document.getElementById("zaglavlje").innerHTML = "";
+            document.getElementById("elementi").innerHTML = "";
+            document.getElementById("podaciDomacin").innerHTML = "";
+            if (sessionStorage["username"] != "" && sessionStorage["password"] != "" && sessionStorage["type"] == "domacin") {
+                $.ajax({
+                    url: '/api/domacin/GetData/',
+                    method: 'POST',
+                    contentType: "application/json",
+                    dataType: "json",
+                    async: false,
+                    data: JSON.stringify({
+                        KorisnickoIme: sessionStorage["username"],
+                        Lozinka: sessionStorage["password"]
+                    }),
+                    success: function (response) {
+                        //alert(sessionStorage["username"] + " " + sessionStorage["password"]);
+                        if (!document.getElementById("podaciDomacin").hasChildNodes()) {
+                            var tabela = $("<form id=\"IzmenaPodatakaForma\"><table class=\"table\" align=\"center\" id=\"PrikazKorisnickihPodataka\"></table></form>");
+                            $("#podaciDomacin").append(tabela);
+                            var Ime = $("<tr><th>Ime: </th><td><input required minlength=\"4\" type=\"text\" class=\"fieldname\" id=\"Ime\" placeholder=\"ime\"/></td></tr>");
+                            var Prezime = $("<tr><th>Prezime: </th><td><input required minlength=\"4\" type=\"text\" class=\"fieldname\" id=\"Prezime\" placeholder=\"prezime\"/></td></tr>");
+                            var KorisnickoIme = $("<tr><th>Korisnicko Ime: </th><td><input required minlength=\"4\" type=\"text\" class=\"fieldname\" id=\"KorisnickoIme\" placeholder=\"korisnicko ime\"/></td></tr>");
+                            var Lozinka = $("<tr><th>Lozinka: </th><td><input type=\"text\" required minlength=\"8\" class=\"fieldname\" id=\"Lozinka\" placeholder=\"lozinka\"/></td></tr>");
+                            var Dugme = $("<tr><td colspan=\"2\" style=\"text-align:center\" ><button class=\"btn\" type=\"submit\" class=\"success\" id=\"Izmeni\" value=\"Izmeni\" onclick=\"izmeni()\">Izmeni</button></td></tr>")
+                            var pol = JSON.stringify(response.Pol);
+                            if (pol == 0) {
+                                var Pol = $("<tr><td colspan=\"2\">Z<input type=\"radio\" id=\"Pol\" name=\"Pol\" value=\"zenski\" /><input type=\"radio\" name=\"Pol\" id=\"Pol\" value=\"muski\" checked/><span> M</span></td></tr>");
+                            } else {
+                                var Pol = $("<tr><td colspan=\"2\">Z<input type=\"radio\" id=\"Pol\" name=\"Pol\" value=\"zenski\" checked/><input type=\"radio\" id=\"Pol\" name=\"Pol\" value=\"muski\" /><span> M</span></td></tr>");
+                            }
+
+                            $("#PrikazKorisnickihPodataka").append(Ime);
+                            $("#Ime").val(response.Ime);
+                            $("#PrikazKorisnickihPodataka").append(Prezime);
+                            $("#Prezime").val(response.Prezime);
+                            $("#PrikazKorisnickihPodataka").append(KorisnickoIme);
+                            $("#KorisnickoIme").val(response.KorisnickoIme);
+                            $("#PrikazKorisnickihPodataka").append(Lozinka);
+                            $("#Lozinka").val(response.Lozinka);
+                            $("#PrikazKorisnickihPodataka").append(Pol);
+                            $("#PrikazKorisnickihPodataka").append(Dugme);
+                        }
+                    }
+                });
+            } else {
+
+                $("#podaciDomacin").css({ "color": "red", "background-color": "navy", "font-size": "20px", "font-family": "Calibri", "font-weight": "bolder" });
+                $("#podaciDomacin").text("Domacin nepoznat, proverite da li ste se ulogovali kao domacin.");
+                var DugmeOK = $("<div><button type=\"button\" class=\"success\" id=\"OKMessage\"  onclick=\"zatvoriOKMessage()\">OK</button></div>");
+                $("#podaciDomacin").text.append(DugmeOK);
+            }
+
+        }
+        izmeni = function () {
+            //sessionStorage["username"] = $("#KorisnickoIme").val();
+            //sessionStorage["password"] = $("#Lozinka").val();
+            //alert(sessionStorage["username"] + " " + sessionStorage["password"]);
+            if ($("#IzmenaPodatakaForma")[0].checkValidity()) {
+                $.ajax({
+                    url: "/api/domacin/Izmeni/",
+                    contentType: "application/json",
+                    dataType: "json",
+                    async: false,
+                    method: "POST",
+                    data: JSON.stringify({
+                        Ime: $("#Ime").val(),
+                        Prezime: $("#Prezime").val(),
+                        KorisnickoIme: $("#KorisnickoIme").val(),
+                        Lozinka: $("#Lozinka").val(),
+                        Pol: $("input[id=Pol]:checked").val()
+                    }),
+                    success: function (response) {
+                        if (response != "Korisnik sa tim imenom vec postoji.") {
+                            sessionStorage["username"] = $("#KorisnickoIme").val();
+                            sessionStorage["password"] = $("#Lozinka").val();
+
+                        }
+                        document.getElementById("podaciDomacin").innerHTML = "<button onclick =\"zatvoriOKMessage()\" >&times;</button><div>" + response + "</div>";
+
+                    }
+                });
+            }
+            
+        }
+        ////////////////
+        dobaviApartman = function (apartmanNaziv) {
+            alert(apartmanNaziv)
+            $.ajax({
+                url: '/api/domacin/DobaviApartman',
+                type: 'POST',
+                contentType: "application/json",
+                dataType: "json",
+                async: false,
+                data: JSON.stringify({
+                    Naziv: apartmanNaziv
+                }),
+                success: function (response) {
+                    //alert(JSON.stringify(response))
+                    document.getElementById("zaglavlje").innerHTML = "";
+                    document.getElementById("elementi").innerHTML = "";
+                    $("#statusApartmana").show();
+                    
+
+                        $("#Naziv").val(response.Naziv),
+                        $("#statusApartmanaText").text(status);
+                        $("#BrSoba").val(response.BrSoba),
+                        $("#BrGostiju").val(response.BrGostiju),
+                        //problem kod izmene izmeniti domacina, MOZDA resen na kontroleru
+                        $("#Prijava").val(response.Prijava),
+                        $("#Odjava").val(response.Odjava),
+                        $("#CenaPoNocenju").val(response.CenaPoNocenju),
+                        $("#GeografskaDuzina").val(response.Lokacija.GeografskaDuzina),
+                        $("#GeografskaSirina").val(response.Lokacija.GeografskaSirina),
+                        $("#NaseljenoMesto").val(response.Lokacija.Adresa.NaseljenoMesto),
+                        $("#Ulica").val(response.Lokacija.Adresa.Ulica),
+                        $("#Broj").val(response.Lokacija.Adresa.Broj),
+                        $("#PostanskiBroj").val(response.Lokacija.Adresa.PostanskiBroj)
+                    $("#apartmanModal").modal('show');
+                    $("#LokacijaModal").modal('show');
+                    $("#dodajLokacijuButton").hide();
+                    //$("#SadrzajModal").modal('show');
+                    prikaziSadrzajModal();
+                    $("#apartmanDodajButton").hide();
+                    $("#redZaIzmenuApartmana").show();
+                },
+                error: function (response) {
+                    alert("Greska " + response);
+                }
+            })
+        }
+        obrisiApartman = function (apartmanNaziv) {
+            alert(apartmanNaziv);
+            $.ajax({
+                url: '/api/admin/ObrisiApartman',
+                type: 'POST',
+                contentType: "application/json",
+                dataType: "json",
+                async: false,
+                data: JSON.stringify({
+                    Naziv: apartmanNaziv
+                }),
+                success: function (response) {
+                    alert(response);
+                },
+                error: function (response) {
+                    alert("Greska: " + response);
+                }
+            })
+        }
+        prikaziApartmane = function () {
+            
+            document.getElementById("zaglavlje").innerHTML = "";
+            document.getElementById("elementi").innerHTML = "";
+            document.getElementById("podaciDomacin").innerHTML = "";
+            if (sessionStorage["username"] != "" && sessionStorage["password"] != "" && sessionStorage["type"] == "domacin") {
+                $.get("/api/domacin/PrikaziApartmane", { KorisnickoIme: sessionStorage["username"] }, function (apartmani) {
+                    document.getElementById("zaglavlje").innerHTML = "";
+                    var zaglavlje = $("<tr><th>Naziv</th><th>Broj Soba</th><th>Broj Gostiju</th><th>Domacin</th><th>Prijava</th><th>Odjava</th><th>Cena Po Nocenju</th><th>Naseljeno Mesto</th><th>Ulica</th><th>Broj</th><th>Postanski Broj</th><th>Status</th><th>Sadrzaj</th><th> </th><th> </th><th> </th></tr>")
+                    $("#zaglavlje").append(zaglavlje);
+                    var sadrzaj = "";
+
+                    for (var i = 0; i < apartmani.length; i++) {
+                        if (apartmani[i] != null) {
+                            if (apartmani[i].Status == "0") {
+                                var status = "AKTIVAN";
+                            } else {
+                                var status = "NEAKTIVAN";
+                            }
+                            for (var j = 0; j < apartmani[i].SadrzajApartmana.length; j++) {
+                                sadrzaj += apartmani[i].SadrzajApartmana[j].Id;
+                                if (j != apartmani[i].SadrzajApartmana.length - 1)
+                                    sadrzaj += ", ";
+                            }
+                            var red = $("<tr style=\"border:solid 1px blue\"><th style=\"text-align:center\">" + apartmani[i].Naziv + "</th><th style=\"text-align:center\">" + apartmani[i].BrSoba + "</th><th style=\"text-align:center\">" + apartmani[i].BrGostiju + "</th><th style=\"text-align:center\">" + apartmani[i].Domacin + "</th><th style=\"text-align:center\">" + apartmani[i].Prijava + "</th><th style=\"text-align:center\">" + apartmani[i].Odjava + "</th><th style=\"text-align:center\">" + apartmani[i].CenaPoNocenju + "</th><th style=\"text-align:center\">" + apartmani[i].Lokacija.Adresa.NaseljenoMesto + "</th><th style=\"text-align:center\">" + apartmani[i].Lokacija.Adresa.Ulica + "</th><th style=\"text-align:center\">" + apartmani[i].Lokacija.Adresa.Broj + "</th><th style=\"text-align:center\">" + apartmani[i].Lokacija.Adresa.PostanskiBroj + "</th><th style=\"text-align:center\">" + status + "</th><th>" + sadrzaj + "</th><th style=\"text-align:center\"><button id=\"buttonIzmena\" class=\"btn\" onclick=dobaviApartman(\"" + apartmani[i].Naziv + "\")>Izmeni</button></th><th style=\"text-align:center\"><button id=\"buttonObrisi\" class=\"btn\" onclick=obrisiApartman(\"" + apartmani[i].Naziv + "\")>Obrisi</button></th><th><button class=\"btn\" onclick=PrikaziKomentare(\"" + apartmani[i].Naziv + "\")>Komentari</button></th><tr>");
+                            $("#elementi").append(red);
+                            $("#elementi").addClass('table-bordered');
+                        }
+
+                    }
+                    //sortiranje button
+                    var sortButton = ('<tr><td colspan="16"><input type="radio" class="btn" name="Poredak" value="Opadajuci" checked>Opadajuci <input type="radio" class="btn" name="Poredak" value="Rastuci">   Rastuci </td></tr><tr><td colspan="16"><button class="btn" onclick=sortirajApartmane() >Sortiraj</button></td></tr>');
+                    $("#elementi").append(sortButton);
+                    var filterSelect = ('<tr><td colspan="16"><select id="FilterSadrzaj"></select></td></tr>');
+                    $("#elementi").append(filterSelect);
+                    $.ajax({
+                        url: '/api/admin/DobaviSadrzaje/',
+                        method: 'GET',
+                        success: function (sadrzaji) {
+                            for (var i = 0; i < sadrzaji.length; i++) {
+                                var opcija = ('<option value="' + sadrzaji[i].Id + '">' + sadrzaji[i].Id + '</option>');
+                                $("#FilterSadrzaj").append(opcija);
+                            }
+                        }
+                    });
+                    //var filterSadrzaj = ('<tr><td colspan="16"><input type="text" id="FiterSadrzaj" placeholder="Za filtriranje po sadrzaju" size="100"/></td></tr>');
+
+                    var filterTip = ('<tr><td colspan="16"><select id="SelectTip"><option value="CEO">CEO</option><option value="SOBA">SOBA</option></select> </td></tr>');
+                    $("#elementi").append(filterTip);
+                    var filterStatus = ('<tr><td colspan="16"><select id="SelectStatus"><option value="AKTIVAN">AKTIVAN</option><option value="NEAKTIVAN">NEAKTIVAN</option></select></td></tr>');
+                    $("#elementi").append(filterStatus);
+                    var filterRadios = ('<tr><td colspan="16"><input type="radio" name="FilterRadio" value="FilterSadrzaj"/>Po sadrzaju <input type="radio" name="FilterRadio" value="SelectTip"/>Po tipu <input type="radio" name="FilterRadio" value="SelectStatus"/>Po statusu</td></tr>');
+                    $("#elementi").append(filterRadios);
+                    var filterButton = ('<tr><td colspan="16"><button onclick="FiltrirajApartmane()" class="btn">Filtriraj</button></td></tr>');
+                    $("#elementi").append(filterButton);
+
+
+
+                    $("#tabelaKorisnika").show(750);
+                });
+                
+            } else {
+                $("#podaciDomacin").css({ "color": "red", "background-color": "navy", "font-size": "20px", "font-family": "Calibri", "font-weight": "bolder" });
+                $("#podaciDomacin").text("Domacin nepoznat, proverite da li ste se ulogovali kao domacin.");
+                var DugmeOK = $("<div><button type=\"button\" class=\"success\" id=\"OKMessage\"  onclick=\"zatvoriOKMessage()\">OK</button></div>");
+                $("#podaciDomacin").text.append(DugmeOK);
+            }
+        }
+        //sortiranje apartmana
+        sortirajApartmane = function () {
+
+            $.get("/api/domacin/PrikaziSortiraneApartmane/", { Poredak: $("input[name=Poredak]:checked").val(), KorisnickoIme: sessionStorage["username"] }, function (apartmani) {
+
+                document.getElementById("zaglavlje").innerHTML = "";
+                document.getElementById("elementi").innerHTML = "";
+                var zaglavlje = $("<tr><th>Naziv</th><th>Broj Soba</th><th>Broj Gostiju</th><th>Domacin</th><th>Prijava</th><th>Odjava</th><th>Cena Po Nocenju</th><th>Naseljeno Mesto</th><th>Ulica</th><th>Broj</th><th>Postanski Broj</th><th>Status</th><th>Sadrzaj</th><th> </th><th> </th><th> </th></tr>")
+                $("#zaglavlje").append(zaglavlje);
+                var sadrzaj = "";
+
+                for (var i = 0; i < apartmani.length; i++) {
+                    if (apartmani[i] != null) {
+                        if (apartmani[i].Status == "0") {
+                            var status = "AKTIVAN";
+                        } else {
+                            var status = "NEAKTIVAN";
+                        }
+                        for (var j = 0; j < apartmani[i].SadrzajApartmana.length; j++) {
+                            sadrzaj += apartmani[i].SadrzajApartmana[j].Id;
+                            if (j != apartmani[i].SadrzajApartmana.length - 1)
+                                sadrzaj += ", ";
+                        }
+                        var red = $("<tr style=\"border:solid 1px blue\"><th style=\"text-align:center\">" + apartmani[i].Naziv + "</th><th style=\"text-align:center\">" + apartmani[i].BrSoba + "</th><th style=\"text-align:center\">" + apartmani[i].BrGostiju + "</th><th style=\"text-align:center\">" + apartmani[i].Domacin + "</th><th style=\"text-align:center\">" + apartmani[i].Prijava + "</th><th style=\"text-align:center\">" + apartmani[i].Odjava + "</th><th style=\"text-align:center\">" + apartmani[i].CenaPoNocenju + "</th><th style=\"text-align:center\">" + apartmani[i].Lokacija.Adresa.NaseljenoMesto + "</th><th style=\"text-align:center\">" + apartmani[i].Lokacija.Adresa.Ulica + "</th><th style=\"text-align:center\">" + apartmani[i].Lokacija.Adresa.Broj + "</th><th style=\"text-align:center\">" + apartmani[i].Lokacija.Adresa.PostanskiBroj + "</th><th style=\"text-align:center\">" + status + "</th><th>" + sadrzaj + "</th><th style=\"text-align:center\"><button id=\"buttonIzmena\" class=\"btn\" onclick=dobaviApartman(\"" + apartmani[i].Naziv + "\")>Izmeni</button></th><th style=\"text-align:center\"><button id=\"buttonObrisi\" class=\"btn\" onclick=obrisiApartman(\"" + apartmani[i].Naziv + "\")>Obrisi</button></th><th><button class=\"btn\" onclick=PrikaziKomentare(\"" + apartmani[i].Naziv + "\")>Komentari</button></th><tr>");
+                        $("#elementi").append(red);
+
+
+                        $("#elementi").addClass('table-bordered');
+                    }
+
+                }
+                //sortiranje button
+                var sortButton = ('<tr><td colspan="16"><input type="radio" class="btn" name="Poredak" value="Opadajuci" checked>Opadajuci <input type="radio" class="btn" name="Poredak" value="Rastuci">   Rastuci </td></tr><tr><td colspan="16"><button class="btn" onclick=sortirajApartmane() >Sortiraj</button></td></tr>');
+                $("#elementi").append(sortButton);
+                var filterSelect = ('<tr><td colspan="16"><select id="FilterSadrzaj"></select></td></tr>');
+                $("#elementi").append(filterSelect);
+                $.ajax({
+                    url: '/api/admin/DobaviSadrzaje/',
+                    method: 'GET',
+                    success: function (sadrzaji) {
+                        for (var i = 0; i < sadrzaji.length; i++) {
+                            var opcija = ('<option value="' + sadrzaji[i].Id + '">' + sadrzaji[i].Id + '</option>');
+                            $("#FilterSadrzaj").append(opcija);
+                        }
+                    }
+                });
+                //var filterSadrzaj = ('<tr><td colspan="16"><input type="text" id="FiterSadrzaj" placeholder="Za filtriranje po sadrzaju" size="100"/></td></tr>');
+
+                var filterTip = ('<tr><td colspan="16"><select id="SelectTip"><option value="CEO">CEO</option><option value="SOBA">SOBA</option></select> </td></tr>');
+                $("#elementi").append(filterTip);
+                var filterStatus = ('<tr><td colspan="16"><select id="SelectStatus"><option value="AKTIVAN">AKTIVAN</option><option value="NEAKTIVAN">NEAKTIVAN</option></select></td></tr>');
+                $("#elementi").append(filterStatus);
+                var filterRadios = ('<tr><td colspan="16"><input type="radio" name="FilterRadio" value="FilterSadrzaj"/>Po sadrzaju <input type="radio" name="FilterRadio" value="SelectTip"/>Po tipu <input type="radio" name="FilterRadio" value="SelectStatus"/>Po statusu</td></tr>');
+                $("#elementi").append(filterRadios);
+                var filterButton = ('<tr><td colspan="16"><button onclick="FiltrirajApartmane()" class="btn">Filtriraj</button></td></tr>');
+                $("#elementi").append(filterButton);
+
+
+                $("#tabelaKorisnika").show(750);
+                
+
+            })
+        }
+
+        //filtriranje apartmana
+        FiltrirajApartmane = function () {
+            var id = $("input[name=FilterRadio]:checked").val();
+            $.get('/api/domacin/GetFiltriraneApartmane/', { Filter: $('#' + id + '').val(), KorisnickoIme: sessionStorage["username"] }, function (apartmani) {
+                document.getElementById("zaglavlje").innerHTML = "";
+                document.getElementById("elementi").innerHTML = "";
+
+                var zaglavlje = $("<tr><th>Naziv</th><th>Broj Soba</th><th>Broj Gostiju</th><th>Domacin</th><th>Prijava</th><th>Odjava</th><th>Cena Po Nocenju</th><th>Naseljeno Mesto</th><th>Ulica</th><th>Broj</th><th>Postanski Broj</th><th>Status</th><th>Sadrzaj</th><th> </th><th> </th><th> </th></tr>")
+                $("#zaglavlje").append(zaglavlje);
+                var sadrzaj = "";
+
+                for (var i = 0; i < apartmani.length; i++) {
+                    if (apartmani[i] != null) {
+                        if (apartmani[i].Status == "0") {
+                            var status = "AKTIVAN";
+                        } else {
+                            var status = "NEAKTIVAN";
+                        }
+                        for (var j = 0; j < apartmani[i].SadrzajApartmana.length; j++) {
+                            sadrzaj += apartmani[i].SadrzajApartmana[j].Id;
+                            if (j != apartmani[i].SadrzajApartmana.length - 1)
+                                sadrzaj += ", ";
+                        }
+                        var red = $("<tr style=\"border:solid 1px blue\"><th style=\"text-align:center\">" + apartmani[i].Naziv + "</th><th style=\"text-align:center\">" + apartmani[i].BrSoba + "</th><th style=\"text-align:center\">" + apartmani[i].BrGostiju + "</th><th style=\"text-align:center\">" + apartmani[i].Domacin + "</th><th style=\"text-align:center\">" + apartmani[i].Prijava + "</th><th style=\"text-align:center\">" + apartmani[i].Odjava + "</th><th style=\"text-align:center\">" + apartmani[i].CenaPoNocenju + "</th><th style=\"text-align:center\">" + apartmani[i].Lokacija.Adresa.NaseljenoMesto + "</th><th style=\"text-align:center\">" + apartmani[i].Lokacija.Adresa.Ulica + "</th><th style=\"text-align:center\">" + apartmani[i].Lokacija.Adresa.Broj + "</th><th style=\"text-align:center\">" + apartmani[i].Lokacija.Adresa.PostanskiBroj + "</th><th style=\"text-align:center\">" + status + "</th><th>" + sadrzaj + "</th><th style=\"text-align:center\"><button id=\"buttonIzmena\" class=\"btn\" onclick=dobaviApartman(\"" + apartmani[i].Naziv + "\")>Izmeni</button></th><th style=\"text-align:center\"><button id=\"buttonObrisi\" class=\"btn\" onclick=obrisiApartman(\"" + apartmani[i].Naziv + "\")>Obrisi</button></th><th><button class=\"btn\" onclick=PrikaziKomentare(\"" + apartmani[i].Naziv + "\")>Komentari</button></th><tr>");
+                        $("#elementi").append(red);
+
+
+                        $("#elementi").addClass('table-bordered');
+                    }
+
+                }
+                //sortiranje button
+                var sortButton = ('<tr><td colspan="16"><input type="radio" class="btn" name="Poredak" value="Opadajuci" checked>Opadajuci <input type="radio" class="btn" name="Poredak" value="Rastuci">   Rastuci </td></tr><tr><td colspan="16"><button class="btn" onclick=sortirajApartmane() >Sortiraj</button></td></tr>');
+                $("#elementi").append(sortButton);
+                var filterSelect = ('<tr><td colspan="16"><select id="FilterSadrzaj"></select></td></tr>');
+                $("#elementi").append(filterSelect);
+                $.ajax({
+                    url: '/api/admin/DobaviSadrzaje/',
+                    method: 'GET',
+                    success: function (sadrzaji) {
+                        for (var i = 0; i < sadrzaji.length; i++) {
+                            var opcija = ('<option value="' + sadrzaji[i].Id + '">' + sadrzaji[i].Id + '</option>');
+                            $("#FilterSadrzaj").append(opcija);
+                        }
+                    }
+                });
+                //var filterSadrzaj = ('<tr><td colspan="16"><input type="text" id="FiterSadrzaj" placeholder="Za filtriranje po sadrzaju" size="100"/></td></tr>');
+
+                var filterTip = ('<tr><td colspan="16"><select id="SelectTip"><option value="CEO">CEO</option><option value="SOBA">SOBA</option></select> </td></tr>');
+                $("#elementi").append(filterTip);
+                var filterStatus = ('<tr><td colspan="16"><select id="SelectStatus"><option value="AKTIVAN">AKTIVAN</option><option value="NEAKTIVAN">NEAKTIVAN</option></select></td></tr>');
+                $("#elementi").append(filterStatus);
+                var filterRadios = ('<tr><td colspan="16"><input type="radio" name="FilterRadio" value="FilterSadrzaj"/>Po sadrzaju <input type="radio" name="FilterRadio" value="SelectTip"/>Po tipu <input type="radio" name="FilterRadio" value="SelectStatus"/>Po statusu</td></tr>');
+                $("#elementi").append(filterRadios);
+                var filterButton = ('<tr><td colspan="16"><button onclick="FiltrirajApartmane()" class="btn">Filtriraj</button></td></tr>');
+                $("#elementi").append(filterButton);
+
+
+                $("#tabelaKorisnika").show(750);
+            });
+        }
+
+        prikaziSadrzajModal = function () {
+
+            $.ajax({
+                url: "/api/domacin/DobaviSadrzaj/",
+                method: "GET",
+                success: function (response) {
+                    document.getElementById("redZaSadrzaj").innerHTML = "";
+                    ////dodati logiku za generisanje tabele
+                    for (var i = 0; i < response.length; i++) {
+                        var red = $("<tr><th colspan=\"2\" ><input type=\"checkbox\" id=\"sadrzajCheckBox\" value=\"" + response[i].Id + "\" title=\"" + response[i].Naziv + "\" /> </th><th>" + response[i].Id + "</th><th>" + response[i].Naziv + "</th></tr>");
+                        $("#redZaSadrzaj").append(red);
+                    }
+                    
+                    $("#SadrzajModal").modal('show');
+                    $("#redZaSadrzaj").show();
+                    
+                },
+                error: function (response) {
+                    alert(response);
+                }
+            })
+        }
+
+
+        //pretraga rezervacija
+        PretragaRezervacija = function () {
+            document.getElementById('zaglavlje').innerHTML = "";
+            document.getElementById('elementi').innerHTML = "";
+
+            if (sessionStorage["username"] != "" && sessionStorage["type"] == "domacin") {
+                var zaglavlje = ('<tr><th style="text-align:center" colspan="3">Pretrazite:</th></tr>');
+                $("#zaglavlje").append(zaglavlje);
+                var pretragaKorisnikaIme = ('<tr><td><b>Po korisnickom imenu: </b></td><td><input type="text" id="KorisnickoImePretraga" placeholder="Unesite korisnicko ime za pretragu" size = "100"> </td></tr>');
+                $("#elementi").append(pretragaKorisnikaIme);
+
+                var PretragaDugme = ('<tr><td colspan="5"><button class="btn" onclick="PretraziRezervacije()">Pretrazi</button></td></tr>');
+                $("#elementi").append(PretragaDugme);
+                $("#tabelaKorisnika").show();
+            }
+            else {
+                $("#sadrzajPodataka").css({ "color": "red", "background-color": "navy", "font-size": "20px", "font-family": "Calibri", "font-weight": "bolder", "text-align": "center" });
+                $("#sadrzajPodataka").text("Admin nepoznat, proverite da li ste se ulogovali kao admin.");
+            }
+        }
+
+        PretraziRezervacije = function () {
+            var sta = $("#KorisnickoImePretraga").val();
+            if (sta == null || sta == "") {
+                document.getElementById('zaglavlje').innerHTML = "";
+                document.getElementById('elementi').innerHTML = "";
+                var error = ('<tr><td><b>Niste uneli nista za pretragu</b></td></tr>');
+                $("#zaglavlje").append(error);
+                var vrPretr = ('<tr><td><button class="btn" onclick="PretragaRezervacija()">Vrati se na pretragu</button></td></tr>');
+                $("#elementi").append(vrPretr);
+                $("#tabelaKorisnika").show();
+            } else {
+                $.get('/api/domacin/PretraziRez/', { ElementPretrage: sta, Domacin: sessionStorage["username"] }, function (response) {
+                    document.getElementById("zaglavlje").innerHTML = "";
+                    document.getElementById("elementi").innerHTML = "";
+                    if (sessionStorage["username"] != "" && sessionStorage["password"] != "" && sessionStorage["type"] == "domacin") {
+                        for (var i = 0; i < response.length; i++) {
+                            document.getElementById("zaglavlje").innerHTML = "";
+                            var zaglavlje = $("<tr><th>Apartman</th><th style=\"text-align:center\">Rezervisao</th><th>Pocetni datum</th></th><th>Broj Nocenja</th><th>Ukupna Cena</th><th>Status</th></tr>");
+                            $("#zaglavlje").append(zaglavlje);
+
+                            var status;
+                            if (response[i].Status == '0') {
+                                status = "KREIRANA";
+                            } else if (response[i].Status == '1') {
+                                status = "ODBIJENA";
+                            } else if (response[i].Status == '2') {
+                                status = "ODUSTANAK";
+                            } else if (response[i].Status == '3') {
+                                status = "PRIHVACENA";
+                            } else if (response[i].Status == '4') {
+                                status = "ZAVRSENA";
+                            }
+                            var elementi = $("<tr><td>" + response[i].RezervisaniApartman + "</td><td>" + response[i].Gost + "</td><td>" + response[i].PocetniDatum.toString("yyyy/mm/dd") + "</td><td>" + response[i].BrojNocenja + "</td><td>" + response[i].UkupnaCena + "</td><td>" + status + "</td></tr>")
+                            $("#elementi").append(elementi);
+                            $("#elementi").addClass('table-bordered');
+                        }
+                        $("#tabelaKorisnika").attr("hidden", false);
+                        $("#tabelaKorisnika").show(750);
+
+                    } else {
+                        $("#sadrzaj").css({ "color": "red", "background-color": "navy", "font-size": "20px", "font-family": "Calibri", "font-weight": "bolder", "text-align": "center" });
+                        $("#sadrzaj").text("Domacin nepoznat, proverite da li ste se ulogovali kao domacin.");
+                    }
+                });
+            }
+        }
+
+
+
+        ////////////////
+        prikaziModal = function () {
+            if (sessionStorage["username"] != "" && sessionStorage["type"] == "domacin") {
+                prikaziSadrzajModal();
+                $("#Naziv").val(""),
+                    //$("#statusApartmanaText").text("");
+                    $("#BrSoba").val(""),
+                    $("#BrGostiju").val(""),
+                    $("#Prijava").val(""),
+                    $("#Odjava").val(""),
+                    $("#CenaPoNocenju").val(""),
+                    $("#GeografskaDuzina").val(""),
+                    $("#GeografskaSirina").val(""),
+                    $("#NaseljenoMesto").val(""),
+                    $("#Ulica").val(""),
+                    $("#Broj").val(""),
+                    $("#PostanskiBroj").val("")
+                $("#apartmanModal").modal('show');
+                $("#LokacijaModal").modal('show');
+                $("#SadrzajModal").modal('show');
+                $("#podaciDomacin").InnerHtml = "";
+            } else {
+                $("#podaciDomacin").css({ "color": "red", "background-color": "navy", "font-size": "20px", "font-family": "Calibri", "font-weight": "bolder" });
+                $("#podaciDomacin").text("Domacin nepoznat, proverite da li ste se ulogovali kao domacin.");
+                var DugmeOK = $("<div><button type=\"button\" class=\"success\" id=\"OKMessage\"  onclick=\"zatvoriOKMessage()\">OK</button></div>");
+                $("#podaciDomacin").text.append(DugmeOK);
+            }
+            
+        }
+        prikaziLokacijaModal = function () {
+            $("#LokacijaModal").modal('show');
+        }
+        hideModals = function () {
+            $("#SadrzajModal").modal('hide');
+            $("#LokacijaModal").modal('hide');
+            $("#apartmanModal").modal('hide');
+        }
+
+        //prikaz za odabir komentara
+        PrikaziKomentare = function (apartmanNaziv) {
+            $.get('/api/domacin/PrikaziKomentare/', { apartman: apartmanNaziv }, function (komentari) {
+                document.getElementById("zaKomentareZaglavlje").innerHTML = "";
+                document.getElementById("zaKomentareBody").innerHTML = "";
+                if (komentari.length != 0) {
+                    var redZaglavlje = $("<tr><th>Prikazati:</th><th>Ocena:</th><th>Tekst:</th><th>Ostavio:</th></tr>");
+                    $("#zaKomentareZaglavlje").append(redZaglavlje);
+
+                    for (var i = 0; i < komentari.length; i++) {
+                        var redBody = $('<tr><td><input type="checkbox" id="komentarIzabranCheckbox" value="' + komentari[i].Id + '"/></td><td>' + komentari[i].Ocena + '</td><td>' + komentari[i].Tekst + '</td><td>' + komentari[i].PostavioGost + '</td></tr>')
+                        $("#zaKomentareBody").append(redBody);
+                    }
+                    var dugme = $('<tr><td colspan="4"><button class="btn" onclick="dodajKomentare()">Dodaj komentare</button></td></tr>');
+                    $("#zaKomentareBody").append(dugme);
+                } else {
+                    document.getElementById("zaKomentareZaglavlje").innerHTML = "";
+                    document.getElementById("zaKomentareBody").innerHTML = "";
+                    var error = $("<tr><th style=\"text-align:center\">Nema komentara za ovaj apartman.</th></tr>")
+                    $("#zaKomentareZaglavlje").append(error);
+                }
+                $("#KomentariModal").modal('show');
+            })
+        }
+
+        dodajKomentare = function () {
+            validniKomentari = [];
+            $("input[id=komentarIzabranCheckbox]:checked").each(function () {
+                var id = $(this).val();
+                validniKomentari.push(id);
+            })
+
+            $.ajax({
+                url: '/api/domacin/ValidirajKomentare/',
+                async: false,
+                contentType: 'application/json',
+                dataType: 'json',
+                method: 'POST',
+                data: JSON.stringify(validniKomentari),
+                success: function (response) {
+                    $("#KomentariModal").modal('hide');
+                    alert(response);
+                },
+                error: function (response) {
+                    alert("Error " + response);
+                }
+            })
+        }
+
+
+
+        ///prikaz rezervacija
+        dobaviRezervacije = function () {
+            $.ajax({
+                url: '/api/domacin/DobaviRezervacije/',
+                method: 'POST',
+                contentType: 'application/json',
+                dataType: 'json',
+                data: JSON.stringify({
+                    KorisnickoIme: sessionStorage['username']
+                }),
+                success: function (response) {
+                    document.getElementById("zaglavlje").innerHTML = "";
+                    document.getElementById("elementi").innerHTML = "";
+                    if (sessionStorage["username"] != "" && sessionStorage["password"] != "" && sessionStorage["type"] == "domacin") {
+                        for (var i = 0; i < response.length; i++) {
+                            document.getElementById("zaglavlje").innerHTML = "";
+                            var zaglavlje = $("<tr><th style=\"text-align:center\">Apartman</th><th style=\"text-align:center\">Rezervisao</th><th style=\"text-align:center\">Pocetni datum</th><th style=\"text-align:center\">Broj Nocenja</th><th style=\"text-align:center\">Ukupna Cena</th><th style=\"text-align:center\">Status</th><th> </th> <th> </th><th> </th></tr>");
+                            $("#zaglavlje").append(zaglavlje);
+
+                            var status;
+                            if (response[i].Status == '0') {
+                                status = "KREIRANA";
+                            } else if (response[i].Status == '1') {
+                                status = "ODBIJENA";
+                            } else if (response[i].Status == '2') {
+                                status = "ODUSTANAK";
+                            } else if (response[i].Status == '3') {
+                                status = "PRIHVACENA";
+                            } else if (response[i].Status == '4') {
+                                status = "ZAVRSENA";
+                            }
+                            var elementi = $("<tr id=red" + i + " ><td>" + response[i].RezervisaniApartman + "</td><td>" + response[i].Gost+ "</td><td>" + response[i].PocetniDatum.toString("yyyy/mm/dd") + "</td><td>" + response[i].BrojNocenja + "</td><td>" + response[i].UkupnaCena + "</td><td>" + status + "</td></tr>")
+                            $("#elementi").append(elementi);
+                            if (status == "KREIRANA") {
+                                var Odustanak = $("<td><button class =\"btn\" id=\"" + response[i].Id + "\" onclick=Prihvati(" + response[i].Id + ")>Prihvati</button></td> <td><button class =\"btn\"  onclick=Odbi(" + response[i].Id + ")>Odbij</button></td><td> </td>");
+                                $("#red" + i + "").append(Odustanak);
+                            } else if (status == "PRIHVACENA") {
+                                var Odustanak = $("<td></td><td><button class =\"btn\" id=\"" + response[i].Id + "\" onclick=Odbi(" + response[i].Id + ")> Odbij </button></td><td><button class=\"btn\" onclick=Zavrsi(" + response[i].Id + ")>Zavrsi</button></td>");
+                                $("#red" + i + "").append(Odustanak);
+                            
+                            } else {
+                                var Odustanak = $("<td></td><td></td><td></td>");
+                                $("#red" + i + "").append(Odustanak);
+                            }
+                            $("#elementi").addClass('table-bordered');
+                        }
+                        var sortButton = ('<tr><td colspan="16"><input type="radio" class="btn" name="PoredakR" value="Opadajuci" checked>Opadajuci <input type="radio" class="btn" name="PoredakR" value="Rastuci">   Rastuci </td></tr><tr><td colspan="16"><button class="btn" onclick=sortirajRezervacije() >Sortiraj</button></td></tr>');
+                        $("#elementi").append(sortButton);
+                        var filterRed = ('<tr><td colspan="16"><select id="FilterRezSelect"><option value="KREIRANA">KREIRANA</option><option value="ODBIJENA">ODBIJENA</option><option value="ODUSTANAK">ODUSTANAK</option><option value="PRIHVACENA">PRIHVACENA</option><option value="ZAVRSENA">ZAVRSENA</option></select></td></tr>')
+                        $("#elementi").append(filterRed);
+                        var filterButton = ('<tr><td colspan="16"><button onclick="FiltrirajRezervacije()" class="btn">Filtriraj</button></td></tr>');
+                        $("#elementi").append(filterButton);
+                        $("#tabelaKorisnika").attr("hidden", false);
+                        $("#tabelaKorisnika").show(750);
+
+                    } else {
+                        $("#podaciDomacin").css({ "color": "red", "background-color": "navy", "font-size": "20px", "font-family": "Calibri", "font-weight": "bolder" });
+                        $("#podaciDomacin").text("Domacin nepoznat, proverite da li ste se ulogovali kao domacin.");
+                        var DugmeOK = $("<div><button type=\"button\" class=\"success\" id=\"OKMessage\"  onclick=\"zatvoriOKMessage()\">OK</button></div>");
+                        $("#podaciDomacin").text.append(DugmeOK);
+                    }
+
+                },
+                error: function (response) {
+                    alert(response);
+                }
+
+            });
+        }
+
+
+        //filtriranje rezervacija
+        FiltrirajRezervacije = function () {
+            var id = $("#FilterRezSelect").val();
+            //alert(id);
+            $.get('/api/domacin/DobaviFiltriraneRezervacije/', { Filter: id, KorisnickoIme: sessionStorage["username"] }, function (response) {
+                document.getElementById("zaglavlje").innerHTML = "";
+                document.getElementById("elementi").innerHTML = "";
+                if (sessionStorage["username"] != "" && sessionStorage["password"] != "" && sessionStorage["type"] == "domacin") {
+                    for (var i = 0; i < response.length; i++) {
+                        document.getElementById("zaglavlje").innerHTML = "";
+                        var zaglavlje = $("<tr><th>Apartman<th>Pocetni datum</th></th><th>Broj Nocenja</th><th>Ukupna Cena</th><th>Status</th><th> </th></tr>");
+                        $("#zaglavlje").append(zaglavlje);
+
+                        var status;
+                        if (response[i].Status == '0') {
+                            status = "KREIRANA";
+                        } else if (response[i].Status == '1') {
+                            status = "ODBIJENA";
+                        } else if (response[i].Status == '2') {
+                            status = "ODUSTANAK";
+                        } else if (response[i].Status == '3') {
+                            status = "PRIHVACENA";
+                        } else if (response[i].Status == '4') {
+                            status = "ZAVRSENA";
+                        }
+                        var elementi = $("<tr id=\"red" + i + "\"><td>" + response[i].RezervisaniApartman + "</td><td>" + response[i].PocetniDatum + "</td><td>" + response[i].BrojNocenja + "</td><td>" + response[i].UkupnaCena + "</td><td>" + status + "</td></tr>")
+                        $("#elementi").append(elementi);
+                        if (status == "PRIHVACENA" || status == "KREIRANA") {
+                            var Odustanak = $("<td><button class =\"btn\" id=\"" + response[i].Id + "\" onclick=Odustani(" + response[i].Id + ")>Odustani</button></td>");
+                            $("#red" + i + "").append(Odustanak);
+                        } else {
+                            var Odustanak = $("<td></td>");
+                            $("#red" + i + "").append(Odustanak);
+                        }
+                        $("#elementi").addClass('table-bordered');
+                    }
+                    //sortiranje button
+                    var sortButton = ('<tr><td colspan="16"><input type="radio" class="btn" name="PoredakR" value="Opadajuci" checked>Opadajuci <input type="radio" class="btn" name="PoredakR" value="Rastuci">   Rastuci </td></tr><tr><td colspan="16"><button class="btn" onclick=sortirajRezervacije() >Sortiraj</button></td></tr>');
+                    $("#elementi").append(sortButton);
+                    ////
+                    var filterRed = ('<tr><td colspan="16"><select id="FilterRezSelect"><option value="KREIRANA">KREIRANA</option><option value="ODBIJENA">ODBIJENA</option><option value="ODUSTANAK">ODUSTANAK</option><option value="PRIHVACENA">PRIHVACENA</option><option value="ZAVRSENA">ZAVRSENA</option></select></td></tr>')
+                    $("#elementi").append(filterRed);
+                    var filterButton = ('<tr><td colspan="16"><button onclick="FiltrirajRezervacije()" class="btn">Filtriraj</button></td></tr>');
+                    $("#elementi").append(filterButton);
+                    $("#tabelaApartmana").attr("hidden", false);
+                    $("#tabelaApartmana").show(750);
+
+                } else {
+                    $("#sadrzaj").css({ "color": "red", "background-color": "navy", "font-size": "20px", "font-family": "Calibri", "font-weight": "bolder", "text-align": "center" });
+                    $("#sadrzaj").text("Domacin nepoznat, proverite da li ste se ulogovali kao domacin.");
+                }
+            });
+        }
+
+
+
+        //sortiranje rezervacija
+        sortirajRezervacije = function () {
+            //alert("Sort rezervacija");
+            $.get("/api/domacin/DobaviSortiraneRezervacije/", { PoredakR: $("input[name=PoredakR]:checked").val(), KorisnickoIme: sessionStorage["username"] },
+                function (response) {
+                    document.getElementById("zaglavlje").innerHTML = "";
+                    document.getElementById("elementi").innerHTML = "";
+                    if (sessionStorage["username"] != "" && sessionStorage["password"] != "" && sessionStorage["type"] == "domacin") {
+                        for (var i = 0; i < response.length; i++) {
+                            document.getElementById("zaglavlje").innerHTML = "";
+                            var zaglavlje = $("<tr><th>Apartman<th>Pocetni datum</th></th><th>Broj Nocenja</th><th>Ukupna Cena</th><th>Status</th><th> </th></tr>");
+                            $("#zaglavlje").append(zaglavlje);
+
+                            var status;
+                            if (response[i].Status == '0') {
+                                status = "KREIRANA";
+                            } else if (response[i].Status == '1') {
+                                status = "ODBIJENA";
+                            } else if (response[i].Status == '2') {
+                                status = "ODUSTANAK";
+                            } else if (response[i].Status == '3') {
+                                status = "PRIHVACENA";
+                            } else if (response[i].Status == '4') {
+                                status = "ZAVRSENA";
+                            }
+                            var elementi = $("<tr id=\"red" + i + "\"><td>" + response[i].RezervisaniApartman + "</td><td>" + response[i].PocetniDatum + "</td><td>" + response[i].BrojNocenja + "</td><td>" + response[i].UkupnaCena + "</td><td>" + status + "</td></tr>")
+                            $("#elementi").append(elementi);
+                            if (status == "PRIHVACENA" || status == "KREIRANA") {
+                                var Odustanak = $("<td><button class =\"btn\" id=\"" + response[i].Id + "\" onclick=Odustani(" + response[i].Id + ")>Odustani</button></td>");
+                                $("#red" + i + "").append(Odustanak);
+                            } else {
+                                var Odustanak = $("<td></td>");
+                                $("#red" + i + "").append(Odustanak);
+                            }
+                            $("#elementi").addClass('table-bordered');
+                        }
+                        //sortiranje button
+                        var sortButton = ('<tr><td colspan="16"><input type="radio" class="btn" name="PoredakR" value="Opadajuci" checked>Opadajuci <input type="radio" class="btn" name="PoredakR" value="Rastuci">   Rastuci </td></tr><tr><td colspan="16"><button class="btn" onclick=sortirajRezervacije() >Sortiraj</button></td></tr>');
+                        $("#elementi").append(sortButton);
+                        ////
+                        var filterRed = ('<tr><td colspan="16"><select id="FilterRezSelect"><option value="KREIRANA">KREIRANA</option><option value="ODBIJENA">ODBIJENA</option><option value="ODUSTANAK">ODUSTANAK</option><option value="PRIHVACENA">PRIHVACENA</option><option value="ZAVRSENA">ZAVRSENA</option></select></td></tr>')
+                        $("#elementi").append(filterRed);
+                        var filterButton = ('<tr><td colspan="16"><button onclick="FiltrirajRezervacije()" class="btn">Filtriraj</button></td></tr>');
+                        $("#elementi").append(filterButton);
+                        $("#tabelaApartmana").attr("hidden", false);
+                        $("#tabelaApartmana").show(750);
+
+                    } else {
+                        $("#sadrzaj").css({ "color": "red", "background-color": "navy", "font-size": "20px", "font-family": "Calibri", "font-weight": "bolder", "text-align": "center" });
+                        $("#sadrzaj").text("Domacin nepoznat, proverite da li ste se ulogovali kao domacin.");
+                    }
+                });
+        }
+
+        Prihvati = function (rezervacija) {
+            $.ajax({
+                url: '/api/domacin/RezervacijaPrihvati/',
+                type: 'POST',
+                contentType: 'application/json',
+                dataType: 'json',
+                data: JSON.stringify({
+                    Id: rezervacija
+                }),
+                success: function (response) {
+
+                    alert(response);
+                },
+                error: function (response) {
+                    alert("Error " + response);
+                }
+            });
+        }
+
+        Odbi = function (rezervacija) {
+            $.ajax({
+                url: '/api/domacin/RezervacijaOdbi/',
+                type: 'POST',
+                contentType: 'application/json',
+                dataType: 'json',
+                data: JSON.stringify({
+                    Id: rezervacija
+                }),
+                success: function (response) {
+                    alert(response);
+                },
+                error: function (response) {
+                    alert("Error " + response);
+                }
+            });
+        }
+
+        Zavrsi = function (rezervacija) {
+            $.ajax({
+                url: '/api/domacin/RezervacijaZavrsi/',
+                type: 'POST',
+                contentType: 'application/json',
+                dataType: 'json',
+                data: JSON.stringify({
+                    Id: rezervacija
+                }),
+                success: function (response) {
+                    alert(response);
+                },
+                error: function (response) {
+                    alert("Error " + response);
+                }
+            });
+        }
+
+
+        ///odjava
+        OdjaviMe = function () {
+            sessionStorage["username"] = "";
+            sessionStorage["password"] = "";
+            sessionStorage["type"] = "";
+            window.location = "Login.html";
+        }
+
+        $(document).ready(function () {
+
+            $('.date').datepicker({
+                multidate: true,
+                //format: 'dd/mm/yyyy',
+                format: 'yyyy/mm/dd',
+                todayHighlight: true,
+                startDate: new Date(2019, 5, 22),
+                endDate: new Date(2019, 11, 31),
+            });
+
+            $("#korisnik").append(document.createTextNode(sessionStorage["type"] + " " + sessionStorage["username"]));
+            $("#zatvoriApartmanModal").click(function () {
+                hideModals();
+            });
+            $("#zatvoriLokacijaModal").click(function () {
+                $("#LokacijaModal").modal('hide');
+            });
+            $("#zatvoriSadrzajModal").click(function () {
+                $("#SadrzajModal").modal('hide');
+            });
+            //za dodaj Lokaciju button unutar LokacijaModal-a
+            $("#apartmanDodajButton").click(function () {
+
+                
+                ////////////
+                //lokacija adresa i ostalo
+
+                var broj;
+                var ulica = "";
+                var grad = "";
+                var postanskiBroj;
+
+                var delovi = addresa.split(',');
+                var delovi1 = delovi[0].split(' ');
+                if (isNaN(delovi1[delovi1.length - 1])) {
+                    for (var i = 0; i < delovi1.length; i++) {
+                        ulica += delovi1[i] + " ";
+                    }
+                    broj = String(randomIntFromInterval(1, 20));
+                }
+                else {
+                    for (var i = 0; i < delovi1.length - 1; i++) {
+                        ulica += delovi1[i] + " ";
+                    }
+                    broj = delovi1[delovi1.length - 1];
+                }
+                var delovi2 = delovi[1].split(' ');
+                if (isNaN(delovi2[delovi2.length - 1])) {
+                    for (var i = 1; i < delovi2.length; i++) {
+                        grad += delovi2[i] + " ";
+                    }
+                    postanskiBroj = "21000";
+                } else if (delovi2[delovi2.length - 1] > 22000) {
+                    for (var i = 1; i < delovi2.length - 1; i++) {
+                        grad += delovi2[i] + " ";
+                    }
+                    postanskiBroj = "21000";
+                }
+                else {
+                    for (var i = 1; i < delovi2.length - 1; i++) {
+                        grad += delovi2[i] + " ";
+                    }
+                    postanskiBroj = delovi2[delovi2.length - 1];
+                }
+
+                $('#Ulica').val(ulica.trim());
+                $('#Broj').val(parseInt(broj.trim()));
+                $('#NaseljenoMesto').val(grad.trim());
+                $('#PostanskiBroj').val(parseInt(postanskiBroj.trim()));
+
+                //////////////
+                sadrzaj = [];
+                $("input[id=sadrzajCheckBox]:checked").each(function () {
+                    var id = $(this).val();
+                    var naziv = $(this).attr("title");
+                    var item = { "Id": id, "Naziv": naziv };
+                    sadrzaj.push(item);
+                });
+                //$("#apartmanDodajButton").click();
+                //alert(sadrzaj);
+                datumi = $("#datumi").val().split(',');
+                //alert(datumi);
+
+                //var slikaTag;
+                slike = [];
+                var slikeDobijene = document.getElementById('dodajSlike');
+                var sveSlike = slikeDobijene.files;
+                for (var i = 0; i < sveSlike.length; i++) {
+                    slike.push(sveSlike[i].name);
+                }
+
+                
+                if ($("#formaApartman")[0].checkValidity()) {
+
+                    $.ajax({
+                        url: "/api/domacin/dodajApartman/",
+                        type: "POST",
+                        contentType: "application/json",
+                        dataType: "json",
+                        async: false,
+                        data: JSON.stringify({
+                            Naziv: $("#Naziv").val(),
+                            Tip: $("#tipApartmanaSelect").children("option:selected").val(),
+                            BrSoba: $("#BrSoba").val(),
+                            BrGostiju: $("#BrGostiju").val(),
+                            Domacin: sessionStorage["username"],
+                            Prijava: $("#Prijava").val(),
+                            Odjava: $("#Odjava").val(),
+                            CenaPoNocenju: $("#CenaPoNocenju").val(),
+                            Lokacija: {
+                                GeografskaDuzina: $("#GeografskaDuzina").val(),
+                                GeografskaSirina: $("#GeografskaSirina").val(),
+                                Adresa: {
+                                    NaseljenoMesto: $("#NaseljenoMesto").val(),
+                                    Ulica: $("#Ulica").val(),
+                                    Broj: $("#Broj").val(),
+                                    PostanskiBroj: $("#PostanskiBroj").val()
+                                }
+                            },
+                            SadrzajApartmana: sadrzaj,
+                            DatumiZaIzdavanje: datumi,
+                            Slike: slike
+                        }),
+                        success: function (response) {
+                            alert(response);
+                        }
+                    })
+                    window.location = window.location;
+                }
+
+            })
+            //izmena apartmana
+            $("#apartmanIzmeniButton").click(function () {
+                datumi = $("#datumi").val().split(',');
+
+                sadrzaj = [];
+                $("input[id=sadrzajCheckBox]:checked").each(function () {
+                    var id = $(this).val();
+                    var naziv = $(this).attr("title");
+                    var item = { "Id": id, "Naziv": naziv };
+                    sadrzaj.push(item);
+                });
+                slike = [];
+                var slikeDobijene = document.getElementById('dodajSlike');
+                var sveSlike = slikeDobijene.files;
+                for (var i = 0; i < sveSlike.length; i++) {
+                    slike.push(sveSlike[i].name);
+                }
+                if ($("#formaApartman")[0].checkValidity()) {
+
+                    $.ajax({
+                        url: "/api/domacin/IzmeniApartman/",
+                        type: "POST",
+                        contentType: "application/json",
+                        dataType: "json",
+                        async: false,
+                        data: JSON.stringify({
+                            Naziv: $("#Naziv").val(),
+                            Tip: $("#tipApartmanaSelect").children("option:selected").val(),
+                            BrSoba: $("#BrSoba").val(),
+                            BrGostiju: $("#BrGostiju").val(),
+                            Domacin: sessionStorage["username"],
+                            Prijava: $("#Prijava").val(),
+                            Odjava: $("#Odjava").val(),
+                            CenaPoNocenju: $("#CenaPoNocenju").val(),
+                            Lokacija: {
+                                GeografskaDuzina: $("#GeografskaDuzina").val(),
+                                GeografskaSirina: $("#GeografskaSirina").val(),
+                                Adresa: {
+                                    NaseljenoMesto: $("#NaseljenoMesto").val(),
+                                    Ulica: $("#Ulica").val(),
+                                    Broj: $("#Broj").val(),
+                                    PostanskiBroj: $("#PostanskiBroj").val()
+                                }
+                            },
+                            SadrzajApartmana: sadrzaj,
+                            DatumiZaIzdavanje: datumi,
+                            Slike: slike
+                        }),
+                        success: function (response) {
+                            alert(response);
+                        },
+                        error: function (response) {
+                            alert("Error: " + response);
+                        }
+                    })
+                    //window.location = window.location;
+                }
+            });
+        });
+
+
+    </script>
+</head>
+<body style="background: url('../Image/DomacinBody.jpg') fixed center no-repeat; background-size: cover;">
+    <h1 style="color:blue"><b>Ulogovani: </b><span id="korisnik"></span></h1>
+    <div id="opcije" style="margin-left:15px">
+        <table class="table-condensed" align="center" style="border:1px dashed red">
+            <tr>
+                <th>
+                    <div style="text-align:center">
+                        <button id="domacinPodaci" class="btn" onclick="prikazi()">Prikazi podatke</button>
+                    </div>
+                </th>
+                <th>
+                    <div style="text-align:center">
+                        <button id="dodajApartman" class="btn" onclick="prikaziModal()">Kreirajte Vas apartman</button>
+                    </div>
+                </th>
+                <th>
+                    <div style="text-align:center">
+                        <button id="apartmanPodaci" class="btn" onclick="prikaziApartmane()">Prikazi apartmane</button>
+                    </div>
+                </th>
+                <th>
+                    <div style="text-align:center">
+                        <button class="btn" onclick="dobaviRezervacije()">Prikazi moje rezervacije</button>
+                    </div>
+                </th>
+                <th>
+                    <div style="text-align:center">
+                        <button class="btn" onclick="PretragaRezervacija()">Pretraga Rezervacija</button>
+                    </div>
+                </th>
+                <th>
+                    <div style="text-align:center">
+                        <button class="btn" style="background-color:greenyellow" onclick="OdjaviMe()">Odjava</button>
+                    </div>
+                </th>
+            </tr>
+        </table>
+    </div>
+
+    <div id="sadrzaj" style="margin-left:15px; text-align:center">
+        <table id="tabelaKorisnika" align="center" style="border-collapse:collapse" hidden>
+            <thead id="zaglavlje" class="table-bordered" style="border:solid blue 1px"></thead>
+            <tbody id="elementi" class="table-bordered" style="border:solid blue 1px;border-collapse:collapse"></tbody>
+        </table>
+    </div>
+
+    <form id="formaApartman">
+        <div class="modal fade modal-xl" id="apartmanModal" style="text-align:center;margin:auto; margin-left:21%" data-backdrop="false">
+            <table class="table-bordered">
+                <tr>
+                    <th style="text-align:right;font-size:20px" colspan="2">
+                        <a href="#" style="color:black" id="zatvoriApartmanModal">&times;</a>
+                    </th>
+                </tr>
+                <tr>
+                    <th>
+                        Naziv apartmana:
+                    </th>
+                    <td>
+                        <input type="text" id="Naziv" required />
+                    </td>
+                </tr>
+                <tr>
+                    <th>
+                        Tip apartmana:
+                    </th>
+                    <td>
+                        <select id="tipApartmanaSelect">
+                            <option value="SOBA">SOBA</option>
+                            <option value="CEO">CEO</option>
+                        </select>
+                    </td>
+                </tr>
+                <tr>
+                    <th>
+                        Broj gostiju:
+                    </th>
+                    <td>
+                        <input type="number" id="BrGostiju" required />
+                    </td>
+                </tr>
+                <tr>
+                    <th>
+                        Broj soba:
+                    </th>
+                    <td>
+                        <input type="number" id="BrSoba" required />
+                    </td>
+                </tr>
+                <tr>
+                    <th>
+                        Vreme prijave:
+                    </th>
+                    <td>
+                        <input type="number" id="Prijava" min="0" max="24" required />
+                    </td>
+                </tr>
+                <tr>
+                    <th>
+                        Vreme odjave:
+                    </th>
+                    <td>
+                        <input type="number" id="Odjava" min="0" max="24" required />
+                    </td>
+                </tr>
+                <tr>
+                    <th>
+                        Slobodni datumi:
+                    </th>
+                    <td>
+                        <div class="container" style="width:300px;">
+                            <input type="text" class="form-control date" placeholder="Izaberite slobodne datume" id="datumi">
+                            <span class="input-group-addon add-on"><span class="glyphicon glyphicon-calendar"></span></span>
+                            <!--<button id="dodajDatumeButton" onclick="dodajDatume()">Dodaj datume</button>-->
+                        </div>
+                        <script src="https://static.codepen.io/assets/common/stopExecutionOnTimeout-de7e2ef6bfefd24b79a3f68b414b87b8db5b08439cac3f1012092b2290c719cd.js"></script>
+                        <!--<script src="//cdnjs.cloudflare.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>-->
+                        <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.3.0/js/bootstrap-datepicker.js"></script>
+                    </td>
+                </tr>
+                <tr>
+                    <th>
+                        Dodajte sliku:
+                    </th>
+                    <td>
+                        <input type="file" id="dodajSlike" name="dodajSlike" accept="image/jpeg, image/png" class="hidden" multiple hidden />
+                        <button type="button" onclick="document.getElementById('dodajSlike').click()" class="btn" for="dodajSlike">Izaberite sliku/e</button>
+                    </td>
+                </tr>
+                <tr>
+                    <th>
+                        Cena po nocenju:
+                    </th>
+                    <td>
+                        <span id="slider"></span>
+                        <input type="number" id="CenaPoNocenju" min="10" required />
+                    </td>
+                </tr>
+                <!--<tr>
+                    <td><button id="sadrzajButton" type="button" class="btn" onclick="prikaziSadrzajModal()">Dodajte Sadrzaj</button></td>
+                    <td>
+                        <button id="lokacijaButton" type="button" class="btn" onclick="prikaziLokacijaModal()">Dodajte Lokaciju</button>
+                    </td>
+                </tr>-->
+                <tr class="modal fade" id="LokacijaModal" style="text-align:center;position:inherit; width:inherit" data-backdrop="false">
+                    <td colspan="2">
+
+                        <table class="table-bordered" style="text-align:center">
+                            <tr>
+                                <th style="text-align:right;font-size:20px" colspan="2">
+                                    <a href="#" style="color:black" id="zatvoriLokacijaModal">&times;</a>
+                                </th>
+                            </tr>
+                            <tr>
+                                <th>
+                                    Geografska sirina:
+                                </th>
+                                <td>
+                                    <input type="text" id="GeografskaSirina" required readonly />
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>
+                                    Geografska duzina:
+                                </th>
+                                <td>
+                                    <input type="text" id="GeografskaDuzina" required readonly />
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>
+                                    Adresa:
+                                </th>
+                                <td colspan="2" rowspan="4" style="text-align:inherit">
+                                    <table class="table-condensed" align="center" style="text-align:left">
+                                        <tr>
+                                            <th> Naseljeno Mesto:</th>
+                                            <td><input type="text" id="NaseljenoMesto" required readonly /></td>
+                                        </tr>
+                                        <tr>
+                                            <th>
+                                                Ulica:
+                                            </th>
+                                            <td><input type="text" id="Ulica" required readonly /></td>
+                                        </tr>
+                                        <tr>
+                                            <th>
+                                                Broj:
+                                            </th>
+                                            <td><input type="number" id="Broj" required readonly /></td>
+                                        </tr>
+                                        <tr>
+                                            <th>
+                                                Postanski broj:
+                                            </th>
+                                            <td><input type="number" id="PostanskiBroj" required readonly /></td>
+                                        </tr>
+                                        <tr>
+                                            <td colspan="2">
+                                                <div id="mapCanvas"></div>
+                                                <div id="infoPanel">
+                                                    <b hidden>Current position:</b>
+                                                    <div hidden id="info"></div>
+                                                    <b>Najbliza Adresa:</b>
+                                                    <div id="address">
+                                                    </div>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </td>
+                            </tr>
+
+                        </table>
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="2">
+                        <button type="button" id="dodajLokacijuButton" class="btn" onclick="DodajLokaciju()">Dodaj Lokaciju</button>
+                    </td>
+                </tr>
+                <tr class="modal fade" id="SadrzajModal" style="text-align:center;position:inherit; width:inherit" data-backdrop="false">
+                    <th style="text-align:right" colspan="3">
+                        <table>
+                            <tr>
+                                <th style="text-align:right;font-size:20px" colspan="3">
+                                    <a href="#" style="color:black" id="zatvoriSadrzajModal">&times;</a>
+                                </th>
+                            </tr>
+                            <tr>
+                                <th>
+                                    Sadrzaji:
+                                </th>
+                                <td colspan="3">
+                                    <table id="redZaSadrzaj" hidden class="table-bordered" style="text-align:center;position:inherit;"></table>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td colspan="3" align="center">
+                                    <button type="submit" class="btn" id="apartmanDodajButton" hidden>Dodaj apartman</button>
+                                </td>
+                            </tr>
+                            <tr id="redZaIzmenuApartmana" hidden>
+                                <td colspan="3" align="center">
+                                    <button type="submit" class="btn" id="apartmanIzmeniButton" >Izmeni apartman</button>
+                                </td>
+                            </tr>
+                        </table>
+                    </th>
+                </tr>
+            </table>
+        </div>
+    </form>
+
+    <div id="podaciDomacin" style="text-align:center; display:inline-block;position:fixed;margin-top:15px; margin-left:45%"></div>
+
+    <div class="modal fade " id="KomentariModal" style=" align-self:center" >
+        <div class="modal-dialog" >
+            <div class="modal-body">
+                <div class="modal-content">
+                    <table class="table-responsive">
+                        <thead id="zaKomentareZaglavlje"></thead>
+                        <tbody id="zaKomentareBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

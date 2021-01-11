@@ -1,0 +1,102 @@
+﻿body {
+    padding-top: 50px;
+    padding-bottom: 20px;
+    background-size: cover;
+}
+
+#mapCanvas {
+    height: 470px;
+    text-align: center;
+}
+
+#infoPanel {
+    float: left;
+    margin-left: 10px;
+}
+
+    #infoPanel div {
+        margin-bottom: 5px;
+    }
+
+
+/* Set padding to keep content from hitting the edges */
+.body-content {
+    padding-left: 15px;
+    padding-right: 15px;
+}
+
+.greskaDiv {
+    color: red;
+    background-color: navy;
+    font-size: 20px;
+    font-family: Calibri;
+    font-weight: bolder;
+}
+
+table {
+    align-items: center;
+    align-self: center;
+    text-align: center;
+    width: 800px;
+    height: 100px
+}
+
+.table-condensed {
+    height: 50px;
+    border: outset blue 1px;
+}
+
+
+
+.btn-success, .btn {
+    border: 1px solid gray;
+    background-color: palegreen;
+}
+
+tbody {
+    width: 600px;
+    height: 95px;
+}
+
+#inputText {
+    width: 400px;
+}
+
+thead th {
+    background-color: mediumturquoise;
+    border: 1px solid red;
+}
+
+td, th {
+    border: 1px solid blue;
+}
+
+tbody th td {
+    border: 1px solid blue;
+}
+
+td, th {
+    background: #e6ffff;
+}
+/* Set width on the form input elements since they're 100% wide by default */
+input,
+select,
+textarea {
+    max-width: 280px;
+}
+
+h1, h2 {
+    font-family: sans-serif;
+    color: blue;
+    align-content: center;
+    align-self: center;
+    text-align: center;
+}
+
+.modal-dialog {
+    width: auto;
+}
+.modal {
+    position: fixed;
+    left: 50%;
+}

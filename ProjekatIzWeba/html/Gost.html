@@ -1,0 +1,893 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+
+    <meta charset="utf-8" />
+
+    <script src="../Scripts/jquery-3.3.1.min.js"></script>
+    <script src="../Scripts/jquery-3.3.1.js"></script>
+    <link href="../Content/Site.css" rel="stylesheet" />
+    <link href="../Content/DatePicker.css" rel="stylesheet" />
+    <script src="../Scripts/bootstrap.js"></script>
+    <script src="../Scripts/bootstrap.min.js"></script>
+    <link rel="stylesheet" href="../Content/bootstrap.min.css" />
+    <link href="../Content/bootstrap.min.css" rel="stylesheet" />
+
+
+
+    <!--za datePicker-->
+    <script src="//code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+    <!--<script src="https://static.codepen.io/assets/common/stopExecutionOnTimeout-de7e2ef6bfefd24b79a3f68b414b87b8db5b08439cac3f1012092b2290c719cd.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.3.0/js/bootstrap-datepicker.js"></script>-->
+
+    <script>
+        document.getElementById("IzmenaPodatakaForma").onsubmit = function () {
+
+            return false; //prevent the default behavior of the submit event
+        }
+        document.getElementById("pretragaApartmanaForma").onsubmit = function () {
+
+            return false; //prevent the default behavior of the submit event
+        }
+        document.getElementById("NapraviRezervacijuForma").onsubmit = function () {
+
+            return false; //prevent the default behavior of the submit event
+        }
+        document.getElementById("OstaviteKomentarForma").onsubmit = function () {
+
+            return false; //prevent the default behavior of the submit event
+        }
+    </script>
+    <script type="text/javascript">
+
+        //pretraga apartmana
+        PretragaApartmana = function () {
+            document.getElementById("zaglavlje").innerHTML = "";
+            document.getElementById("elementi").innerHTML = "";
+            document.getElementById("sadrzaj").innerHTML = "";
+
+            $("#ApartmanPretragaModal").modal('show');
+
+        }
+
+
+        /////////////
+
+        PretraziApartmane = function () {
+            if (($("#DatumODPretraga").val() == "" && $("#DatumDOPretraga").val() != "") || ($("#DatumDOPretraga").val() == "" && $("#DatumODPretraga").val() != "")) {
+                alert("Ako vrsite pretragu po datumima, morate uneti oba datuma");
+                //PretragaApartmana();
+                $("#ApartmanPretragaModal").modal('show');
+            } else {
+                if ($("#pretragaApartmanaForma")[0].checkValidity()) {
+                    $("#ApartmanPretragaModal").modal('hide');
+                    $.ajax({
+                        url: '/api/login/PretraziApartmane/',
+                        async: false,
+                        type: 'POST',
+                        contentType: 'application/json',
+                        dataType: 'json',
+                        data: JSON.stringify({
+                            Dolazak: $("#DatumODPretraga").val(),
+                            Odlazak: $("#DatumDOPretraga").val(),
+                            Grad: $("#GradPretraga").val(),
+                            CenaOD: $("#CenaODPretraga").val(),
+                            CenaDO: $("#CenaDOPretraga").val(),
+                            BrSobaOD: $("#BrSobaODPretraga").val(),
+                            BrSobaDO: $("#BrSobaDOPretraga").val(),
+                            BrOsobaOD: $("#BrOsobaPretraga").val()
+                        }),
+                        success: function (apartmani) {
+
+                            document.getElementById("zaglavlje").innerHTML = "";
+                            var zaglavlje = $("<tr><th>Naziv</th><th>Broj Soba</th><th>Broj Gostiju</th><th>Domacin</th><th>Prijava</th><th>Odjava</th><th>Cena Po Nocenju</th><th>Naseljeno Mesto</th><th>Ulica</th><th>Broj</th><th>Postanski Broj</th><th>Status</th><th>Sadrzaj</th><th> </th><th> </th><th> </th></tr>")
+                            $("#zaglavlje").append(zaglavlje);
+                            var sadrzaj = "";
+
+                            for (var i = 0; i < apartmani.length; i++) {
+                                if (apartmani[i].Status == "0") {
+                                    var status = "AKTIVAN";
+                                } else {
+                                    var status = "NEAKTIVAN";
+                                }
+                                for (var j = 0; j < apartmani[i].SadrzajApartmana.length; j++) {
+                                    sadrzaj += apartmani[i].SadrzajApartmana[j].Id;
+                                    if (j != apartmani[i].SadrzajApartmana.length - 1)
+                                        sadrzaj += ", ";
+                                }
+                                var red = $("<tr style=\"border:solid 1px blue\"><th style=\"text-align:center\">" + apartmani[i].Naziv + "</th><th style=\"text-align:center\">" + apartmani[i].BrSoba + "</th><th style=\"text-align:center\">" + apartmani[i].BrGostiju + "</th><th style=\"text-align:center\">" + apartmani[i].Domacin + "</th><th style=\"text-align:center\">" + apartmani[i].Prijava + "</th><th style=\"text-align:center\">" + apartmani[i].Odjava + "</th><th style=\"text-align:center\">" + apartmani[i].CenaPoNocenju + "</th><th style=\"text-align:center\">" + apartmani[i].Lokacija.Adresa.NaseljenoMesto + "</th><th style=\"text-align:center\">" + apartmani[i].Lokacija.Adresa.Ulica + "</th><th style=\"text-align:center\">" + apartmani[i].Lokacija.Adresa.Broj + "</th><th style=\"text-align:center\">" + apartmani[i].Lokacija.Adresa.PostanskiBroj + "</th><th style=\"text-align:center\">" + status + "</th><th>" + sadrzaj + "</th><th style=\"text-align:center\"><button  class=\"btn\" onclick=rezervisiApartman(\"" + apartmani[i].Naziv + "\")>Rezervisi</button></th><th style=\"text-align:center\"><button  class=\"btn\" onclick=dobaviDetaljeApartmana(\"" + apartmani[i].Naziv + "\")>Detalji</button></th><th><button class=\"btn\" onclick=OstaviKomentar(\"" + apartmani[i].Naziv + "\")>Komentarisite</button></th><tr>");
+
+                                $("#elementi").append(red);
+                                $("#elementi").addClass('table-bordered');
+                            }
+                            //za sortiranje apartmana button
+                            var sortButton = ('<tr><td colspan="16"><input type="radio" class="btn" name="Poredak" value="Opadajuci" checked>Opadajuci <input type="radio" class="btn" name="Poredak" value="Rastuci">   Rastuci </td></tr><tr><td colspan="16"><button class="btn" onclick=sortirajApartmane() >Sortiraj</button></td></tr>');
+                            $("#elementi").append(sortButton);
+                            //filtriranje apartmana
+                            var filterSelect = ('<tr><td colspan="16"><select id="FilterSadrzaj"></select></td></tr>');
+                            $("#elementi").append(filterSelect);
+                            $.ajax({
+                                url: '/api/admin/DobaviSadrzaje/',
+                                method: 'GET',
+                                success: function (sadrzaji) {
+                                    for (var i = 0; i < sadrzaji.length; i++) {
+                                        var opcija = ('<option value="' + sadrzaji[i].Id + '">' + sadrzaji[i].Id + '</option>');
+                                        $("#FilterSadrzaj").append(opcija);
+                                    }
+                                }
+                            });
+                            //var filterSadrzaj = ('<tr><td colspan="16"><input type="text" id="FiterSadrzaj" placeholder="Za filtriranje po sadrzaju" size="100"/></td></tr>');
+
+                            var filterTip = ('<tr><td colspan="16"><select id="SelectTip"><option value="CEO">CEO</option><option value="SOBA">SOBA</option></select> </td></tr>');
+                            $("#elementi").append(filterTip);
+                            var filterRadios = ('<tr><td colspan="16"><input type="radio" name="FilterRadio" value="FilterSadrzaj"/>Po sadrzaju <input type="radio" name="FilterRadio" value="SelectTip"/>Po tipu </td></tr>');
+                            $("#elementi").append(filterRadios);
+                            var filterButton = ('<tr><td colspan="16"><button onclick="FiltrirajApartmane()" class="btn">Filtriraj</button></td></tr>');
+                            $("#elementi").append(filterButton);
+                            $("#tabelaApartmana").attr("hidden", false);
+                            $("#tabelaApartmana").show(750);
+                        },
+                        error: function (response) {
+                            alert("Error: " + response);
+                        }
+                    })
+                }
+            }
+
+        };
+
+
+
+
+        //prikaz i izmena korisnika
+        prikazi = function () {
+            if (sessionStorage["username"] != "" && sessionStorage["password"] != "" && sessionStorage["type"] == "gost") {
+                $.ajax({
+                    url: '/api/gost/GetData/',
+                    method: 'POST',
+                    contentType: "application/json",
+                    dataType: "json",
+                    async: false,
+                    data: JSON.stringify({
+                        KorisnickoIme: sessionStorage["username"],
+                        Lozinka: sessionStorage["password"]
+                    }),
+                    success: function (response) {
+                        //alert(sessionStorage["username"] + " " + sessionStorage["password"]);
+                       // if (!document.getElementById("sadrzaj").hasChildNodes()) {
+                        document.getElementById("zaglavlje").innerHTML = "";
+                        document.getElementById("elementi").innerHTML = "";
+                        document.getElementById("sadrzaj").innerHTML = "";
+                            var tabela = $("<form id=\"IzmenaPodatakaForma\"> <table class=\"table\" align=\"center\" id=\"PrikazKorisnickihPodataka\"></table></form>");
+                            $("#sadrzaj").append(tabela);
+                        var Ime = $("<tr><th>Ime: </th><td><input required minlength=\"4\" type=\"text\"  class=\"fieldname\" id=\"Ime\" placeholder=\"ime\"/></td></tr>");
+                        var Prezime = $("<tr><th>Prezime: </th><td><input required minlength=\"4\" type=\"text\" class=\"fieldname\" id=\"Prezime\" placeholder=\"prezime\"/></td></tr>");
+                        var KorisnickoIme = $("<tr><th>Korisnicko Ime: </th><td><input required type=\"text\" minlength=\"4\" class=\"fieldname\" id=\"KorisnickoIme\" placeholder=\"korisnicko ime\"/></td></tr>");
+                        var Lozinka = $("<tr><th>Lozinka: </th><td><input type=\"text\" required minlength=\"8\" class=\"fieldname\" id=\"Lozinka\" placeholder=\"lozinka\"/></td></tr>");
+                            var Dugme = $("<tr><td colspan=\"2\" style=\"text-align:center\" ><button class=\"btn\" type=\"submit\" class=\"success\" id=\"Izmeni\" value=\"Izmeni\" onclick=\"izmeni()\">Izmeni</button></td></tr>")
+                            var pol = JSON.stringify(response.Pol);
+                            if (pol == 0) {
+                                var Pol = $("<tr><td colspan=\"2\">Z<input type=\"radio\" id=\"Pol\" name=\"Pol\" value=\"zenski\" /><input type=\"radio\" name=\"Pol\" id=\"Pol\" value=\"muski\" checked/><span> M</span></td></tr>");
+                            } else {
+                                var Pol = $("<tr><td colspan=\"2\">Z<input type=\"radio\" id=\"Pol\" name=\"Pol\" value=\"zenski\" checked/><input type=\"radio\" id=\"Pol\" name=\"Pol\" value=\"muski\" /><span> M</span></td></tr>");
+                            }
+
+                            $("#PrikazKorisnickihPodataka").append(Ime);
+                            $("#Ime").val(response.Ime);
+                            $("#PrikazKorisnickihPodataka").append(Prezime);
+                            $("#Prezime").val(response.Prezime);
+                            $("#PrikazKorisnickihPodataka").append(KorisnickoIme);
+                            $("#KorisnickoIme").val(response.KorisnickoIme);
+                            $("#PrikazKorisnickihPodataka").append(Lozinka);
+                            $("#Lozinka").val(response.Lozinka);
+                            $("#PrikazKorisnickihPodataka").append(Pol);
+                            $("#PrikazKorisnickihPodataka").append(Dugme);
+                       // }
+                    }
+                });
+            } else {
+                $("#sadrzaj").css({ "color": "red", "background-color": "navy", "font-size": "20px", "font-family": "Calibri", "font-weight": "bolder" });
+                $("#sadrzaj").text("Gost nepoznat, proverite da li ste se ulogovali kao gost.");
+            }
+
+        }
+        izmeni = function () {
+            if ($("#IzmenaPodatakaForma")[0].checkValidity()) {
+                sessionStorage["username"] = $("#KorisnickoIme").val();
+                sessionStorage["password"] = $("#Lozinka").val();
+                //alert(sessionStorage["username"] + " " + sessionStorage["password"]);
+                $.ajax({
+                    url: "/api/gost/Izmeni/",
+                    contentType: "application/json",
+                    dataType: "json",
+                    async: false,
+                    method: "POST",
+                    data: JSON.stringify({
+                        Ime: $("#Ime").val(),
+                        Prezime: $("#Prezime").val(),
+                        KorisnickoIme: $("#KorisnickoIme").val(),
+                        Lozinka: $("#Lozinka").val(),
+                        Pol: $("input[id=Pol]:checked").val()
+                    }),
+                    success: function (response) {
+                        $("#sadrzaj").text("Promenjeno " + response);
+                        window.location = window.location;
+                    }
+                });
+            }
+            
+        }
+        ///
+        //prikaz apartmana
+        prikaziAktivneApartmane = function () {
+            document.getElementById("zaglavlje").innerHTML = "";
+            document.getElementById("elementi").innerHTML = "";
+            document.getElementById("sadrzaj").innerHTML = "";
+            if (sessionStorage["username"] != "" && sessionStorage["password"] != "" && sessionStorage["type"] == "gost") {
+                $.ajax({
+                    url: "/api/gost/PrikaziAktivneApartmane/",
+                    method: "GET",
+                    success: function (apartmani) {
+
+                        document.getElementById("zaglavlje").innerHTML = "";
+                        var zaglavlje = $("<tr><th>Naziv</th><th>Broj Soba</th><th>Broj Gostiju</th><th>Domacin</th><th>Prijava</th><th>Odjava</th><th>Cena Po Nocenju</th><th>Naseljeno Mesto</th><th>Ulica</th><th>Broj</th><th>Postanski Broj</th><th>Status</th><th>Sadrzaj</th><th> </th><th> </th><th> </th></tr>")
+                        $("#zaglavlje").append(zaglavlje);
+                        var sadrzaj = "";
+
+                        for (var i = 0; i < apartmani.length; i++) {
+                            if (apartmani[i].Status == "0") {
+                                var status = "AKTIVAN";
+                            } else {
+                                var status = "NEAKTIVAN";
+                            }
+                            for (var j = 0; j < apartmani[i].SadrzajApartmana.length; j++) {
+                                sadrzaj += apartmani[i].SadrzajApartmana[j].Id;
+                                if (j != apartmani[i].SadrzajApartmana.length - 1)
+                                    sadrzaj += ", ";
+                            }
+                            var red = $("<tr style=\"border:solid 1px blue\"><th style=\"text-align:center\">" + apartmani[i].Naziv + "</th><th style=\"text-align:center\">" + apartmani[i].BrSoba + "</th><th style=\"text-align:center\">" + apartmani[i].BrGostiju + "</th><th style=\"text-align:center\">" + apartmani[i].Domacin + "</th><th style=\"text-align:center\">" + apartmani[i].Prijava + "</th><th style=\"text-align:center\">" + apartmani[i].Odjava + "</th><th style=\"text-align:center\">" + apartmani[i].CenaPoNocenju + "</th><th style=\"text-align:center\">" + apartmani[i].Lokacija.Adresa.NaseljenoMesto + "</th><th style=\"text-align:center\">" + apartmani[i].Lokacija.Adresa.Ulica + "</th><th style=\"text-align:center\">" + apartmani[i].Lokacija.Adresa.Broj + "</th><th style=\"text-align:center\">" + apartmani[i].Lokacija.Adresa.PostanskiBroj + "</th><th style=\"text-align:center\">" + status + "</th><th>" + sadrzaj + "</th><th style=\"text-align:center\"><button  class=\"btn\" onclick=rezervisiApartman(\"" + apartmani[i].Naziv + "\")>Rezervisi</button></th><th style=\"text-align:center\"><button  class=\"btn\" onclick=dobaviDetaljeApartmana(\"" + apartmani[i].Naziv + "\")>Detalji</button></th><th><button class=\"btn\" onclick=OstaviKomentar(\"" + apartmani[i].Naziv + "\")>Komentarisite</button></th><tr>");
+
+                            $("#elementi").append(red);
+                            $("#elementi").addClass('table-bordered');
+                        }
+                        //za sortiranje apartmana button
+                        var sortButton = ('<tr><td colspan="16"><input type="radio" class="btn" name="Poredak" value="Opadajuci" checked>Opadajuci <input type="radio" class="btn" name="Poredak" value="Rastuci">   Rastuci </td></tr><tr><td colspan="16"><button class="btn" onclick=sortirajApartmane() >Sortiraj</button></td></tr>');
+                        $("#elementi").append(sortButton);
+                        //filtriranje apartmana
+                        var filterSelect = ('<tr><td colspan="16"><select id="FilterSadrzaj"></select></td></tr>');
+                        $("#elementi").append(filterSelect);
+                        $.ajax({
+                            url: '/api/admin/DobaviSadrzaje/',
+                            method: 'GET',
+                            success: function (sadrzaji) {
+                                for (var i = 0; i < sadrzaji.length; i++) {
+                                    var opcija = ('<option value="' + sadrzaji[i].Id + '">' + sadrzaji[i].Id + '</option>');
+                                    $("#FilterSadrzaj").append(opcija);
+                                }
+                            }
+                        });
+                        //var filterSadrzaj = ('<tr><td colspan="16"><input type="text" id="FiterSadrzaj" placeholder="Za filtriranje po sadrzaju" size="100"/></td></tr>');
+
+                        var filterTip = ('<tr><td colspan="16"><select id="SelectTip"><option value="CEO">CEO</option><option value="SOBA">SOBA</option></select> </td></tr>');
+                        $("#elementi").append(filterTip);
+                        var filterRadios = ('<tr><td colspan="16"><input type="radio" name="FilterRadio" value="FilterSadrzaj"/>Po sadrzaju <input type="radio" name="FilterRadio" value="SelectTip"/>Po tipu </td></tr>');
+                        $("#elementi").append(filterRadios);
+                        var filterButton = ('<tr><td colspan="16"><button onclick="FiltrirajApartmane()" class="btn">Filtriraj</button></td></tr>');
+                        $("#elementi").append(filterButton);
+                        $("#tabelaApartmana").attr("hidden", false);
+                        $("#tabelaApartmana").show(750);
+                    }
+                })
+            } else {
+                $("#sadrzaj").css({ "color": "red", "background-color": "navy", "font-size": "20px", "font-family": "Calibri", "font-weight": "bolder", "text-align": "center" });
+                $("#sadrzaj").text("Gost nepoznat, proverite da li ste se ulogovali kao gost.");
+            }
+        }
+
+        //filtriranje apartmana
+        FiltrirajApartmane = function () {
+            var id = $("input[name=FilterRadio]:checked").val();
+            $.get('/api/gost/GetFiltriraneApartmane/', { Filter: $('#' + id + '').val() },
+                function (apartmani) {
+                    document.getElementById("zaglavlje").innerHTML = "";
+                    document.getElementById("elementi").innerHTML = "";
+                    var zaglavlje = $("<tr><th>Naziv</th><th>Broj Soba</th><th>Broj Gostiju</th><th>Domacin</th><th>Prijava</th><th>Odjava</th><th>Cena Po Nocenju</th><th>Naseljeno Mesto</th><th>Ulica</th><th>Broj</th><th>Postanski Broj</th><th>Status</th><th>Sadrzaj</th><th> </th><th> </th><th> </th></tr>")
+                    $("#zaglavlje").append(zaglavlje);
+                    var sadrzaj = "";
+
+                    for (var i = 0; i < apartmani.length; i++) {
+                        if (apartmani[i].Status == "0") {
+                            var status = "AKTIVAN";
+                        } else {
+                            var status = "NEAKTIVAN";
+                        }
+                        for (var j = 0; j < apartmani[i].SadrzajApartmana.length; j++) {
+                            sadrzaj += apartmani[i].SadrzajApartmana[j].Id;
+                            if (j != apartmani[i].SadrzajApartmana.length - 1)
+                                sadrzaj += ", ";
+                        }
+                        var red = $("<tr style=\"border:solid 1px blue\"><th style=\"text-align:center\">" + apartmani[i].Naziv + "</th><th style=\"text-align:center\">" + apartmani[i].BrSoba + "</th><th style=\"text-align:center\">" + apartmani[i].BrGostiju + "</th><th style=\"text-align:center\">" + apartmani[i].Domacin + "</th><th style=\"text-align:center\">" + apartmani[i].Prijava + "</th><th style=\"text-align:center\">" + apartmani[i].Odjava + "</th><th style=\"text-align:center\">" + apartmani[i].CenaPoNocenju + "</th><th style=\"text-align:center\">" + apartmani[i].Lokacija.Adresa.NaseljenoMesto + "</th><th style=\"text-align:center\">" + apartmani[i].Lokacija.Adresa.Ulica + "</th><th style=\"text-align:center\">" + apartmani[i].Lokacija.Adresa.Broj + "</th><th style=\"text-align:center\">" + apartmani[i].Lokacija.Adresa.PostanskiBroj + "</th><th style=\"text-align:center\">" + status + "</th><th>" + sadrzaj + "</th><th style=\"text-align:center\"><button  class=\"btn\" onclick=rezervisiApartman(\"" + apartmani[i].Naziv + "\")>Rezervisi</button></th><th style=\"text-align:center\"><button  class=\"btn\" onclick=dobaviDetaljeApartmana(\"" + apartmani[i].Naziv + "\")>Detalji</button></th><th><button class=\"btn\" onclick=OstaviKomentar(\"" + apartmani[i].Naziv + "\")>Komentarisite</button></th><tr>");
+
+                        $("#elementi").append(red);
+                        $("#elementi").addClass('table-bordered');
+                    }
+                    //za sortiranje apartmana button
+                    var sortButton = ('<tr><td colspan="16"><input type="radio" class="btn" name="Poredak" value="Opadajuci" checked>Opadajuci <input type="radio" class="btn" name="Poredak" value="Rastuci">   Rastuci </td></tr><tr><td colspan="16"><button class="btn" onclick=sortirajApartmane() >Sortiraj</button></td></tr>');
+                    $("#elementi").append(sortButton);
+                    //filtriranje apartmana
+                    var filterSelect = ('<tr><td colspan="16"><select id="FilterSadrzaj"></select></td></tr>');
+                    $("#elementi").append(filterSelect);
+                    $.ajax({
+                        url: '/api/admin/DobaviSadrzaje/',
+                        method: 'GET',
+                        success: function (sadrzaji) {
+                            for (var i = 0; i < sadrzaji.length; i++) {
+                                var opcija = ('<option value="' + sadrzaji[i].Id + '">' + sadrzaji[i].Id + '</option>');
+                                $("#FilterSadrzaj").append(opcija);
+                            }
+                        }
+                    });
+                    //var filterSadrzaj = ('<tr><td colspan="16"><input type="text" id="FiterSadrzaj" placeholder="Za filtriranje po sadrzaju" size="100"/></td></tr>');
+
+                    var filterTip = ('<tr><td colspan="16"><select id="SelectTip"><option value="CEO">CEO</option><option value="SOBA">SOBA</option></select> </td></tr>');
+                    $("#elementi").append(filterTip);
+                    var filterRadios = ('<tr><td colspan="16"><input type="radio" name="FilterRadio" value="FilterSadrzaj"/>Po sadrzaju <input type="radio" name="FilterRadio" value="SelectTip"/>Po tipu </td></tr>');
+                    $("#elementi").append(filterRadios);
+                    var filterButton = ('<tr><td colspan="16"><button onclick="FiltrirajApartmane()" class="btn">Filtriraj</button></td></tr>');
+                    $("#elementi").append(filterButton);
+                    $("#tabelaApartmana").attr("hidden", false);
+                    $("#tabelaApartmana").show(750);
+                }
+            );
+            //alert($("#"+id+"").val());
+        }
+
+        //sortiranje apartmana
+        sortirajApartmane = function () {
+            
+            $.get("/api/gost/PrikaziSortiraneApartmane/", { Poredak: $("input[name=Poredak]:checked").val() }, function (apartmani) {
+
+                document.getElementById("zaglavlje").innerHTML = "";
+                document.getElementById("elementi").innerHTML = "";
+                var zaglavlje = $("<tr><th>Naziv</th><th>Broj Soba</th><th>Broj Gostiju</th><th>Domacin</th><th>Prijava</th><th>Odjava</th><th>Cena Po Nocenju</th><th>Naseljeno Mesto</th><th>Ulica</th><th>Broj</th><th>Postanski Broj</th><th>Status</th><th>Sadrzaj</th><th> </th><th> </th><th> </th></tr>")
+                $("#zaglavlje").append(zaglavlje);
+                var sadrzaj = "";
+
+                for (var i = 0; i < apartmani.length; i++) {
+                    if (apartmani[i].Status == "0") {
+                        var status = "AKTIVAN";
+                    } else {
+                        var status = "NEAKTIVAN";
+                    }
+                    for (var j = 0; j < apartmani[i].SadrzajApartmana.length; j++) {
+                        sadrzaj += apartmani[i].SadrzajApartmana[j].Id;
+                        if (j != apartmani[i].SadrzajApartmana.length - 1)
+                            sadrzaj += ", ";
+                    }
+                    var red = $("<tr style=\"border:solid 1px blue\"><th style=\"text-align:center\">" + apartmani[i].Naziv + "</th><th style=\"text-align:center\">" + apartmani[i].BrSoba + "</th><th style=\"text-align:center\">" + apartmani[i].BrGostiju + "</th><th style=\"text-align:center\">" + apartmani[i].Domacin + "</th><th style=\"text-align:center\">" + apartmani[i].Prijava + "</th><th style=\"text-align:center\">" + apartmani[i].Odjava + "</th><th style=\"text-align:center\">" + apartmani[i].CenaPoNocenju + "</th><th style=\"text-align:center\">" + apartmani[i].Lokacija.Adresa.NaseljenoMesto + "</th><th style=\"text-align:center\">" + apartmani[i].Lokacija.Adresa.Ulica + "</th><th style=\"text-align:center\">" + apartmani[i].Lokacija.Adresa.Broj + "</th><th style=\"text-align:center\">" + apartmani[i].Lokacija.Adresa.PostanskiBroj + "</th><th style=\"text-align:center\">" + status + "</th><th>" + sadrzaj + "</th><th style=\"text-align:center\"><button  class=\"btn\" onclick=rezervisiApartman(\"" + apartmani[i].Naziv + "\")>Rezervisi</button></th><th style=\"text-align:center\"><button  class=\"btn\" onclick=dobaviDetaljeApartmana(\"" + apartmani[i].Naziv + "\")>Detalji</button></th><th><button class=\"btn\" onclick=OstaviKomentar(\"" + apartmani[i].Naziv + "\")>Komentarisite</button></th><tr>");
+
+                    $("#elementi").append(red);
+                    $("#elementi").addClass('table-bordered');
+                }
+                //za sortiranje apartmana button
+                var sortButton = ('<tr><td colspan="16"><input type="radio" class="btn" name="Poredak" value="Opadajuci" checked>Opadajuci <input type="radio" class="btn" name="Poredak" value="Rastuci">   Rastuci </td></tr><tr><td colspan="16"><button class="btn" onclick=sortirajApartmane() >Sortiraj</button></td></tr>');
+                $("#elementi").append(sortButton);
+                /////
+                var filterSelect = ('<tr><td colspan="16"><select id="FilterSadrzaj"></select></td></tr>');
+                $("#elementi").append(filterSelect);
+                $.ajax({
+                    url: '/api/admin/DobaviSadrzaje/',
+                    method: 'GET',
+                    success: function (sadrzaji) {
+                        for (var i = 0; i < sadrzaji.length; i++) {
+                            var opcija = ('<option value="' + sadrzaji[i].Id + '">' + sadrzaji[i].Id + '</option>');
+                            $("#FilterSadrzaj").append(opcija);
+                        }
+                    }
+                });
+                //var filterSadrzaj = ('<tr><td colspan="16"><input type="text" id="FiterSadrzaj" placeholder="Za filtriranje po sadrzaju" size="100"/></td></tr>');
+
+                var filterTip = ('<tr><td colspan="16"><select id="SelectTip"><option value="CEO">CEO</option><option value="SOBA">SOBA</option></select> </td></tr>');
+                $("#elementi").append(filterTip);
+                var filterRadios = ('<tr><td colspan="16"><input type="radio" name="FilterRadio" value="FilterSadrzaj"/>Po sadrzaju <input type="radio" name="FilterRadio" value="SelectTip"/>Po tipu </td></tr>');
+                $("#elementi").append(filterRadios);
+                var filterButton = ('<tr><td colspan="16"><button onclick="FiltrirajApartmane()" class="btn">Filtriraj</button></td></tr>');
+                $("#elementi").append(filterButton);
+                $("#tabelaApartmana").attr("hidden", false);
+                $("#tabelaApartmana").show(750);
+
+            })
+        }
+
+        ///ostavi komentar
+        OstaviKomentar = function (apartmanNaziv) {
+            $("#KomentarText").val("");
+            $("#KomentarOcena").val("");
+            $("#KomentarOcena").attr('title', apartmanNaziv);
+            $("#KomentarModal").modal('show');
+            
+        }
+
+        ///detalji apartmana
+        dobaviDetaljeApartmana = function (apartmanNaziv) {
+            naziv = apartmanNaziv;
+            document.getElementById("zaSadrzaj").innerHTML = "";
+            zaNazivApartmana = $("<tr><th colspan=\"2\" style=\"text-align:center\" id=\"ApartmanNazivZaRezervaciju\" value=\"" + apartmanNaziv + "\">" + apartmanNaziv + "</th></tr>");
+            $.ajax({
+                url: "/api/gost/DobaviApartman",
+                method: "POST",
+                contentType: "application/json",
+                dataType: "json",
+                data: JSON.stringify({
+                    Naziv: apartmanNaziv
+                }),
+                success: function (response) {
+
+                    $("#zaSadrzaj").append(zaNazivApartmana);
+
+
+                    for (var i = 0; i < response.SadrzajApartmana.length; i++) {
+                        var red = $("<tr><td>" + response.SadrzajApartmana[i].Id + "</td><td>" + response.SadrzajApartmana[i].Naziv + "</td></tr>");
+                        $("#zaSadrzaj").append(red);
+                    }
+                    var redSlike = $('<tr ><td  id="redZaSlike" colspan="2"></td></tr>');
+                    $("#zaSadrzaj").append(redSlike);
+
+                    for (var j = 0; j < response.Slike.length; j++) {
+                        var slika = $('<img src = "../Image/' + response.Slike[j] + '" alt = "Nema slike" style="height:200px;width:200px;border:3px solid blue">');
+                        $("#redZaSlike").append(slika);
+                    }
+
+                    for (var i = 0; i < response.Komentari.length; i++) {
+                        var komentar = $('<tr><td style="text-align:center"><b>Ostavio: </b>' + response.Komentari[i].PostavioGost + '</td><td style="text-align:center"><b>Ocena: </b>' + response.Komentari[i].Ocena + '  <b>Komentar: </b>' + response.Komentari[i].Tekst + '</td></tr>')
+                        $("#zaSadrzaj").append(komentar);
+                    }
+
+                    var dugme = $("<td colspan=\"2\"><button class=\"btn\" onclick=rezervisiApartman(\"" + naziv + "\")>Rezervisi</button>");
+                    $("#zaSadrzaj").append(dugme);
+                    $("#sadrzajApartmanaModal").modal('show');
+                },
+                error: function (response) {
+                    alert(response)
+                }
+            })
+        }
+
+        //rezervacija apartmana
+        rezervisiApartman = function (apartman) {
+            //$("#KomentarModal").modal('show');
+            $.ajax({
+                url: '/api/gost/DobaviDatume/',
+                method: 'POST',
+                contentType: 'application/json',
+                dataType: 'json',
+                async: false,
+                data: JSON.stringify({
+                    Naziv: apartman
+                }),
+                success: function (response) {
+                    $("#slobodniDatumi").text(response);
+                    $("#slobodniDatumi").attr('title', apartman);                    
+                },
+                error: function (response) {
+                    alert("Error " + response);
+                }
+            })
+            $("#RezervacijaModal").modal('show');
+        }
+
+        ///prikaz rezervacija
+        dobaviRezervacije = function () {
+            $.ajax({
+                url: '/api/gost/DobaviRezervacije/',
+                method: 'POST',
+                contentType: 'application/json',
+                dataType: 'json',
+                data: JSON.stringify({
+                    KorisnickoIme: sessionStorage['username']
+                }),
+                success: function (response) {
+                    document.getElementById("zaglavlje").innerHTML = "";
+                    document.getElementById("elementi").innerHTML = "";
+                    if (sessionStorage["username"] != "" && sessionStorage["password"] != "" && sessionStorage["type"] == "gost") {
+                        for (var i = 0; i < response.length; i++) {
+                            document.getElementById("zaglavlje").innerHTML = "";
+                            var zaglavlje = $("<tr><th>Apartman<th>Pocetni datum</th></th><th>Broj Nocenja</th><th>Ukupna Cena</th><th>Status</th><th> </th></tr>");
+                            $("#zaglavlje").append(zaglavlje);
+
+                            var status;
+                            if (response[i].Status == '0') {
+                                status = "KREIRANA";
+                            } else if (response[i].Status == '1') {
+                                status = "ODBIJENA";
+                            } else if (response[i].Status == '2') {
+                                status = "ODUSTANAK";
+                            } else if (response[i].Status == '3') {
+                                status = "PRIHVACENA";
+                            } else if (response[i].Status == '4') {
+                                status = "ZAVRSENA";
+                            }
+                            var elementi = $("<tr id=\"red"+i+"\"><td>" + response[i].RezervisaniApartman + "</td><td>" + response[i].PocetniDatum + "</td><td>" + response[i].BrojNocenja + "</td><td>" + response[i].UkupnaCena + "</td><td>" + status + "</td></tr>")
+                            $("#elementi").append(elementi);
+                            if (status == "PRIHVACENA" || status == "KREIRANA") {
+                                var Odustanak = $("<td><button class =\"btn\" id=\"" + response[i].Id + "\" onclick=Odustani("+response[i].Id+")>Odustani</button></td>");
+                                $("#red" + i + "").append(Odustanak);
+                            } else {
+                                var Odustanak = $("<td></td>");
+                                $("#red" + i + "").append(Odustanak);
+                            }
+                            $("#elementi").addClass('table-bordered');
+                        }
+                        //sortiranje button
+                        var sortButton = ('<tr><td colspan="16"><input type="radio" class="btn" name="PoredakR" value="Opadajuci" checked>Opadajuci <input type="radio" class="btn" name="PoredakR" value="Rastuci">   Rastuci </td></tr><tr><td colspan="16"><button class="btn" onclick=sortirajRezervacije() >Sortiraj</button></td></tr>');
+                        $("#elementi").append(sortButton);
+                        ////
+                        $("#tabelaApartmana").attr("hidden", false);
+                        $("#tabelaApartmana").show(750);
+
+                    } else {
+                        $("#sadrzaj").css({ "color": "red", "background-color": "navy", "font-size": "20px", "font-family": "Calibri", "font-weight": "bolder", "text-align": "center" });
+                        $("#sadrzaj").text("Gost nepoznat, proverite da li ste se ulogovali kao gost.");
+                    }
+                    
+                },
+                error: function (response) {
+                    alert(response);
+                }
+
+            });
+        }
+
+        //sortiraj rezervacije
+        sortirajRezervacije = function () {
+            //alert("Sort rezervacija");
+            $.get( "/api/gost/DobaviSortiraneRezervacije/", {PoredakR: $("input[name=PoredakR]:checked").val(), KorisnickoIme: sessionStorage["username"]}, 
+                function (response) {
+                    document.getElementById("zaglavlje").innerHTML = "";
+                    document.getElementById("elementi").innerHTML = "";
+                    if (sessionStorage["username"] != "" && sessionStorage["password"] != "" && sessionStorage["type"] == "gost") {
+                        for (var i = 0; i < response.length; i++) {
+                            document.getElementById("zaglavlje").innerHTML = "";
+                            var zaglavlje = $("<tr><th>Apartman<th>Pocetni datum</th></th><th>Broj Nocenja</th><th>Ukupna Cena</th><th>Status</th><th> </th></tr>");
+                            $("#zaglavlje").append(zaglavlje);
+
+                            var status;
+                            if (response[i].Status == '0') {
+                                status = "KREIRANA";
+                            } else if (response[i].Status == '1') {
+                                status = "ODBIJENA";
+                            } else if (response[i].Status == '2') {
+                                status = "ODUSTANAK";
+                            } else if (response[i].Status == '3') {
+                                status = "PRIHVACENA";
+                            } else if (response[i].Status == '4') {
+                                status = "ZAVRSENA";
+                            }
+                            var elementi = $("<tr id=\"red" + i + "\"><td>" + response[i].RezervisaniApartman + "</td><td>" + response[i].PocetniDatum + "</td><td>" + response[i].BrojNocenja + "</td><td>" + response[i].UkupnaCena + "</td><td>" + status + "</td></tr>")
+                            $("#elementi").append(elementi);
+                            if (status == "PRIHVACENA" || status == "KREIRANA") {
+                                var Odustanak = $("<td><button class =\"btn\" id=\"" + response[i].Id + "\" onclick=Odustani(" + response[i].Id + ")>Odustani</button></td>");
+                                $("#red" + i + "").append(Odustanak);
+                            } else {
+                                var Odustanak = $("<td></td>");
+                                $("#red" + i + "").append(Odustanak);
+                            }
+                            $("#elementi").addClass('table-bordered');
+                        }
+                        //sortiranje button
+                        var sortButton = ('<tr><td colspan="16"><input type="radio" class="btn" name="PoredakR" value="Opadajuci" checked>Opadajuci <input type="radio" class="btn" name="PoredakR" value="Rastuci">   Rastuci </td></tr><tr><td colspan="16"><button class="btn" onclick=sortirajRezervacije() >Sortiraj</button></td></tr>');
+                        $("#elementi").append(sortButton);
+                        ////
+                        $("#tabelaApartmana").attr("hidden", false);
+                        $("#tabelaApartmana").show(750);
+
+                    } else {
+                        $("#sadrzaj").css({ "color": "red", "background-color": "navy", "font-size": "20px", "font-family": "Calibri", "font-weight": "bolder", "text-align": "center" });
+                        $("#sadrzaj").text("Gost nepoznat, proverite da li ste se ulogovali kao gost.");
+                    }
+                });
+            }
+
+        /////odustanak od rezervacije
+        Odustani = function (rezervacija) {
+            $.ajax({
+                url: '/api/gost/RezervacijaOdustani/',
+                type: 'POST',
+                contentType: 'application/json',
+                dataType: 'json',
+                data: JSON.stringify({
+                    Id: rezervacija
+                }),
+                success: function (response) {
+                    alert(response);
+                },
+                error: function (response) {
+                    alert("Error " + response);
+                }
+            });            
+        }
+
+
+        ///odjava
+        OdjaviMe = function () {
+            sessionStorage["username"] = "";
+            sessionStorage["password"] = "";
+            sessionStorage["type"] = "";
+            window.location = "Login.html";
+        }
+        //////
+        $(document).ready(function () {
+            $("#KomentarButton").click(function () {
+                if ($("#OstaviteKomentarForma")[0].checkValidity()) {
+                    $.ajax({
+                        url: '/api/gost/OstaviKomentar/',
+                        type: 'POST',
+                        contentType: 'application/json',
+                        async: false,
+                        dataType: 'json',
+                        data: JSON.stringify({
+                            PostavioGost: sessionStorage["username"],
+                            ZaApartman: $("#KomentarOcena").attr("title"),
+                            Tekst: $("#KomentarText").val(),
+                            Ocena: $("#KomentarOcena").val()
+                        }),
+                        success: function (response) {
+                            $("#KomentarModal").modal('hide');
+                            alert(response);
+                        },
+                        error: function (response) {
+                            alert("Error " + response);
+                        }
+                    })
+                }
+                
+                //alert(apartmanNaziv);
+            });
+
+            $("#napraviRezervaciju").click(function () {
+                if ($("#NapraviRezervacijuForma")[0].checkValidity()) {
+                    $.ajax({
+                        url: '/api/gost/NapraviRezervaciju/',
+                        type: 'POST',
+                        contentType: 'application/json',
+                        dataType: 'json',
+                        async: false,
+                        data: JSON.stringify({
+                            RezervisaniApartman: $("#slobodniDatumi").attr('title'),
+                            PocetniDatum: $("#DatumBrojDana").val(),
+                            BrojNocenja: $("#RezervacijaBrojDana").val(),
+                            Gost: sessionStorage["username"]
+                        }),
+                        success: function (response) {
+                            alert(response);
+                            $("#DatumBrojDana").val("");
+                            $("#RezervacijaBrojDana").val("")
+                            $("#RezervacijaModal").modal('hide');
+                        },
+                        error: function (response) {
+                            alert(response);
+                        }
+                    })
+                }
+            });
+
+            $('.date').datepicker({
+                multidate: false,
+                format: 'yyyy-mm-dd',
+                todayHighlight: true,
+                updateViewDate: false,
+                //format: 'dd/mm/yyyy',
+                startDate: new Date(2019, 5, 22),
+                endDate: new Date(2019, 11, 31)
+            });
+
+            $("#korisnik").append(document.createTextNode(sessionStorage["type"] + " " + sessionStorage["username"]));
+
+            $("#zatvoriDetaljeModal").click(function () {
+                document.getElementById("zaSadrzaj").innerHTML = "";
+                $("#sadrzajApartmanaModal").modal('hide');
+            });
+        });
+    </script>
+    <title></title>
+</head>
+<body style="background: url('../Image/GostBody.jpg') fixed center no-repeat; background-size: cover;">
+
+    <h1 style="color:blue"><b>Ulogovan : </b><span id="korisnik"></span></h1>
+
+    <div style="margin-left:15px">
+        <table class="table-condensed" align="center" style="border:1px dashed red">
+            <tr>
+                <th>
+                    <div style="text-align:center">
+                        <button class="btn" onclick="prikazi()">Prikazi podatke</button>
+                    </div>
+                </th>
+                <th>
+                    <div style="text-align:center">
+                        <button class="btn" onclick="prikaziAktivneApartmane()">Prikazi dostupne apartmane</button>
+                    </div>
+                </th>
+                <th>
+                    <div style="text-align:center">
+                        <button class="btn" onclick="dobaviRezervacije()">Prikazi moje rezervacije</button>
+                    </div>
+                </th>
+                <th>
+                    <div style="text-align:center">
+                        <button class="btn" onclick="PretragaApartmana()">Pretraga Apartmana</button>
+                    </div>
+                </th>
+                <th>
+                    <div style="text-align:center">
+                        <button class="btn" style="background-color:greenyellow" onclick="OdjaviMe()">Odjava</button>
+                    </div>
+                </th>
+            </tr>
+        </table>
+
+    </div>
+
+    <div style="margin-left:15px; text-align:center">
+        <table id="tabelaApartmana" align="center" style="border-collapse:collapse" hidden>
+            <thead id="zaglavlje" class="table-bordered" style="border:solid blue 1px"></thead>
+            <tbody id="elementi" class="table-bordered" style="border:solid blue 1px;border-collapse:collapse"></tbody>
+        </table>
+    </div>
+
+    <div class="modal fade " id="ApartmanPretragaModal" style="margin-left:0%">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-body">
+                    <form id="pretragaApartmanaForma">
+                        <table>
+                            <tr>
+                                <th>
+                                    Pretraga po datumima:
+                                </th>
+                                <td>
+                                    <!--<div id="slobodniDatumi" style="font-weight:bold; text-decoration:underline"></div><br />-->
+                                    <div class="container" style="width:300px;">
+                                        <input type="text" class="form-control date" placeholder="Pocetak odmora..." id="DatumODPretraga">
+                                    </div>
+                                    <!--<div id="slobodniDatumi" style="font-weight:bold; text-decoration:underline"></div><br />-->
+                                    <div class="container" style="width:300px;">
+                                        <input type="text" class="form-control date" placeholder="Kraj odmora..." id="DatumDOPretraga">
+                                    </div>
+                                    <!--<script src="https://static.codepen.io/assets/common/stopExecutionOnTimeout-de7e2ef6bfefd24b79a3f68b414b87b8db5b08439cac3f1012092b2290c719cd.js"></script>-->
+                                    <!--<script src="//cdnjs.cloudflare.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>-->
+                                    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.3.0/js/bootstrap-datepicker.js"></script>
+
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>
+                                    Pretraga po nazivu grada:
+                                </th>
+                                <td>
+                                    <input type="text" id="GradPretraga" placeholder="Naziv grada..." />
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>
+                                    Pretraga po ceni:
+                                </th>
+                                <td>
+                                    <input type="number" id="CenaODPretraga" min="10" placeholder="Minimalna cenu" />&nbsp;
+                                    <input type="number" id="CenaDOPretraga" min="10" placeholder="Maksimalna cenu" />
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>
+                                    Pretraga po broju soba:
+                                </th>
+                                <td>
+                                    <input type="number" id="BrSobaODPretraga" min="1" placeholder="Minimalan broj soba" />&nbsp;
+                                    <input type="number" id="BrSobaDOPretraga" min="1" placeholder="Maksimalan broj soba" />
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>
+                                    Pretraga po broju gostiju:
+                                </th>
+                                <td>
+                                    <input type="number" id="BrOsobaPretraga" min="1" placeholder="Broj gostiju" />
+                                </td>
+                            </tr>
+                            <tr>
+                                <td colspan="2">
+                                    <button type="button" onclick="PretraziApartmane()" class="btn">Pretrazi</button>
+                                </td>
+                            </tr>
+                        </table>
+                    </form>
+            </div>
+        </div>
+    </div>
+
+    <div id="sadrzaj" style="text-align:center; display:inline-block; margin-left:45%; align-content:center"></div>
+
+    <div class="modal fade " id="sadrzajApartmanaModal" style="margin-left:0%">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-body">
+                <div class="modal-content">
+                    <table align="center" style="margin:0 auto">
+                        <tr>
+                            <td style="text-align:right;font-size:25px" colspan="2">
+                                <a href="#" style="color:black" id="zatvoriDetaljeModal" class="btn">&times;</a>
+                            </td>
+                        </tr>
+                        <tbody id="zaSadrzaj"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade " id="RezervacijaModal" style="text-align:center">
+        <div class="modal-dialog modal-lg" style="display:inline-block">
+            <div class="modal-body">
+                <form id="NapraviRezervacijuForma">
+                    <table>
+                        <tr>
+                            <th>
+                                Unesite zeljeni datum i broj dana:
+                            </th>
+                            <td>
+                                <div id="slobodniDatumi" style="font-weight:bold; text-decoration:underline"></div><br />
+                                <div class="container" style="width:300px;">
+                                    <input type="text" class="form-control date" placeholder="Izaberite slobodne datume" id="DatumBrojDana" required>
+                                </div><br />
+                                <script src="https://static.codepen.io/assets/common/stopExecutionOnTimeout-de7e2ef6bfefd24b79a3f68b414b87b8db5b08439cac3f1012092b2290c719cd.js"></script>
+                                <!--<script src="//cdnjs.cloudflare.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>-->
+                                <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.3.0/js/bootstrap-datepicker.js"></script>
+                                <input type="number" min="1" id="RezervacijaBrojDana" required/>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td colspan="2">
+                                <button id="napraviRezervaciju" class="btn">Podnesi rezervaciju</button>
+                            </td>
+                        </tr>
+                    </table>
+                </form>
+            </div>
+        </div>
+    </div>
+
+
+    <div class="modal fade " id="KomentarModal" style="margin-left:0%">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-body">
+                <!--<div class="modal-content">-->
+                <form id="OstaviteKomentarForma">
+                    <table>
+                        <tr>
+                            <th style="text-align:center">
+                                Komentar:
+                            </th>
+                            <td>
+                                <input type="text" required id="KomentarText" placeholder="Napisite svoje misljenje ovde" size="1000" required />
+                            </td>
+                        </tr>
+                        <tr>
+                            <th style="text-align:center">
+                                Vasa ocena:
+                            </th>
+                            <td>
+                                <input type="number" required id="KomentarOcena" min="1" max="5" required />
+                            </td>
+                        </tr>
+                        <tr>
+                            <td colspan="2">
+                                <button id="KomentarButton" class="btn">Ostavite komentar</button>
+                            </td>
+                        </tr>
+                    </table>
+                </form>
+                <!--</div>-->
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>

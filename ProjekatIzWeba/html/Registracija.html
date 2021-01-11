@@ -1,0 +1,168 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <link href="../Content/bootstrap.min.css" rel="stylesheet" />
+    <script src="../Scripts/jquery-3.3.1.min.js"></script>
+    <link href="../Content/Site.css" rel="stylesheet" />
+    <script src="../Scripts/jquery-3.3.1.js"></script>
+
+    <script src="../Scripts/bootstrap.min.js"></script>
+    <title>Registracija</title>
+
+    <script>
+        window.onload = function () {
+            document.getElementById("formaRegistracija").onsubmit = function () {
+
+                return false; //prevent the default behavior of the submit event
+            }
+        }
+    </script>
+    <script type="text/javascript">
+
+        $(document).ready(function () {
+
+            $('#zatvori').click(function () {
+                $('#greskaDiv').hide('fade');
+            });
+
+            $('#registracijaButton').click(function () {
+                if (!$('#formaRegistracija')[0].checkValidity()) {
+                    $('#greskaDivIspis').text('Unesite pravilno podatke za registraciju');
+                    $('#greskaDiv').show();
+                } else if ($("#Lozinka").val() != $("#Lozinka1").val()) {
+                    $('#greskaDivIspis').text('Niste uspesno potvrdili lozinku');
+                    $('#greskaDiv').show();
+                }
+                else {
+                    sessionStorage["username"] = $("#KorisnickoIme").val();
+                    sessionStorage["password"] = $("#Lozinka").val();
+                    sessionStorage["type"] = "gost";
+                    $.ajax({
+                        type: "POST",
+                        async: false,
+                        url: "/api/registracija/Registracija/",
+                        contentType: "application/json",
+                        dataType: "json",
+                        data: JSON.stringify({
+                            Ime: $('#Ime').val(),
+                            Prezime: $('#Prezime').val(),
+                            KorisnickoIme: $('#KorisnickoIme').val(),
+                            Lozinka: $('#Lozinka').val(),
+                            Pol: $("input[name='Pol']:checked").val()
+                        }),
+                        error: function (response) {
+                            alert("Registracija error " + response);
+                        },
+                        success: function (response) {
+                            alert("Registracija success " + response);
+                            window.location = "Gost.html";
+                        }
+                    });
+                }
+            });
+        });
+
+    </script>
+    <title>Registracija</title>
+</head>
+<body style="background: url('../Image/Travel.jpg') fixed center no-repeat;
+    background-size:cover;">
+    <h2>Molimo vas da pravilno unesete sve podatke</h2>
+
+
+
+    <form id="formaRegistracija" onsubmit="return ValidirajFormu()">
+        <table class="table-bordered" align="center" style="border:1px solid blue">
+            <thead>
+                <tr>
+                    <th colspan="2">
+                        <div style="text-align:right">
+                            <a href="Login.html" class="btn-success"><i>Prijava</i></a>
+                        </div>
+                    </th>
+                </tr>
+            </thead>
+            <tr>
+
+                <th class="info" style="color:darkturquoise">
+                    <div style="text-align:center">
+                        Potrebni podaci:
+                    </div>
+                </th>
+                <th class="info" style="color: darkturquoise">
+                    <div style="text-align:center">
+                        Vas unos:
+                    </div>
+                </th>
+            </tr>
+
+            <tr>
+                <th class="info" style="color:mediumturquoise">
+                    Ime:
+                </th>
+                <td class="active">
+                    <input type="text" id="Ime" minlength="4" placeholder="obavezno" required />
+                </td>
+            </tr>
+            <tr>
+                <th class="info" style="color:mediumturquoise">
+                    Prezime:
+                </th>
+                <td class="active">
+                    <input type="text" id="Prezime" minlength="4" placeholder="obavezno" required />
+                </td>
+            </tr>
+            <tr>
+                <th class="info" style="color:mediumturquoise">
+                    Korisnicko Ime:
+                </th>
+                <td class="active">
+                    <input type="text" id="KorisnickoIme" minlength="4" placeholder="obavezno" required />
+                </td>
+            </tr>
+            <tr>
+                <th class="info" style="color:mediumturquoise">
+                    Lozinka:
+                </th>
+                <td class="active">
+                    <input type="password" id="Lozinka" minlength="8" placeholder="obavezno" required />
+                </td>
+            </tr>
+            <tr>
+                <th class="info" style="color:mediumturquoise">
+                    Potvrdite lozinku:
+                </th>
+                <td class="active">
+                    <input type="password" id="Lozinka1" placeholder="obavezno" required />
+                </td>
+            </tr>
+
+            <tr>
+                <th class="info" style="color:mediumturquoise">
+                    Pol:
+                </th>
+                <td class="active">
+                    Z <input type="radio" name="Pol" value="zenski" checked />
+                    <input type="radio" name="Pol" value="muski" /> M
+                </td>
+            </tr>
+            <tr>
+                <td colspan="2" align="center">
+                    <button type="submit" class="btn" id="registracijaButton">Registracija</button>
+                </td>
+            </tr>
+
+        </table>
+    </form>
+
+    <div id="greskaDiv" class="alert" style="text-align:center;">
+        <a id="zatvori" href="#" class="close">&times;</a>
+        <div id="greskaDivIspis" style="text-align:center; font-family:sans-serif; font-size:20px; color:red"></div>
+    </div>
+
+    <br />
+    <br />
+    <img src="../Image/welcome.gif" style="display:block; margin-left:auto; margin-right:auto" alt="Nema slike" height="300" width="400" />
+</body>
+</html>
